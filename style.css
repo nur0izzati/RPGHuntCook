@@ -14,7 +14,6 @@ body {
   -webkit-user-select: none;
 }
 
-/* Alert Banner Popup */
 #alert-banner {
   width: 100%;
   max-width: 600px;
@@ -123,7 +122,7 @@ canvas {
 .action-group {
   display: flex;
   justify-content: space-between;
-  gap: 4px;
+  gap: 3px;
   width: 100%;
 }
 
@@ -138,11 +137,11 @@ button {
   background-color: #89b4fa;
   color: #11111b;
   border: none;
-  padding: 8px 6px;
+  padding: 7px 4px;
   font-weight: bold;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   flex: 1;
   touch-action: manipulation;
 }
@@ -152,13 +151,6 @@ button:disabled {
   color: #6c7086;
   cursor: not-allowed;
 }
-
-#kitchen-btn { background-color: #89dceb; }
-#shop-btn { background-color: #f9e2af; }
-#char-btn { background-color: #cba6f7; }
-#heal-btn { background-color: #a6e3a1; }
-#save-btn { background-color: #94e2d5; padding: 5px; }
-#reset-btn { background-color: #eba0ac; padding: 5px; }
 
 #mobile-controls {
   width: 100%;
