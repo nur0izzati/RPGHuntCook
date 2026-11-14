@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Full 6-Stat System</title>
+  <title>RPGHuntCook - Bigger Screen & Dodge</title>
   <style>
     body {
       background-color: #1e1e2e;
@@ -15,7 +15,7 @@
       justify-content: flex-start;
       min-height: 100vh;
       margin: 0;
-      padding: 8px;
+      padding: 6px;
       box-sizing: border-box;
       touch-action: none;
     }
@@ -23,14 +23,14 @@
     /* Top Resource & Health Bar */
     #ui-bar {
       width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       background-color: #313244;
-      padding: 8px 10px;
+      padding: 8px 12px;
       box-sizing: border-box;
       border-radius: 8px 8px 0 0;
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
       border: 2px solid #45475a;
       border-bottom: none;
@@ -39,9 +39,9 @@
     /* 6-Stat RPG Grid */
     #stats-bar {
       width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       background-color: #252533;
-      padding: 6px 8px;
+      padding: 6px 10px;
       box-sizing: border-box;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -53,19 +53,20 @@
       text-align: center;
     }
 
+    /* BIGGER GAME SCREEN */
     canvas {
       background-color: #181825;
       border: 2px solid #45475a;
       display: block;
       width: 100%;
-      max-width: 500px;
-      height: 230px;
+      max-width: 600px;
+      height: 340px;
     }
 
     /* Action Buttons */
     #action-panel {
       width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       background-color: #313244;
       padding: 8px;
       box-sizing: border-box;
@@ -96,11 +97,12 @@
 
     #shop-btn { background-color: #f9e2af; }
     #char-btn { background-color: #cba6f7; }
+    #heal-btn { background-color: #a6e3a1; }
 
     /* Mobile Controls */
     #mobile-controls {
       width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -113,8 +115,8 @@
     }
 
     #joystick-base {
-      width: 85px;
-      height: 85px;
+      width: 90px;
+      height: 90px;
       background-color: rgba(69, 71, 90, 0.6);
       border-radius: 50%;
       position: relative;
@@ -122,34 +124,41 @@
     }
 
     #joystick-knob {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       background-color: #89b4fa;
       border-radius: 50%;
       position: absolute;
-      top: 24.5px;
-      left: 24.5px;
+      top: 25px;
+      left: 25px;
       pointer-events: none;
     }
 
-    #attack-btn {
-      width: 75px;
-      height: 75px;
-      background-color: #f38ba8;
-      color: #11111b;
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-circle-btn {
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       border: none;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
+
+    #attack-btn { background-color: #f38ba8; color: #11111b; }
+    #dodge-btn { background-color: #fab387; color: #11111b; }
 
     #log {
       width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       margin-top: 6px;
       padding: 8px 10px;
       background-color: #313244;
@@ -161,7 +170,7 @@
       border: 2px solid #45475a;
     }
 
-    /* Modals (Shop & Character Sheet) */
+    /* Modals */
     .modal {
       display: none;
       position: fixed;
@@ -226,7 +235,7 @@
     <span id="stat-gold">🪙 0</span>
     <span id="stat-meat">🥩 0/5</span>
     <span id="stat-dish">🍖 0</span>
-    <span id="stat-hp">HP: 100/100</span>
+    <span id="stat-hp" style="color: #a6e3a1;">HP: 100/100</span>
   </div>
 
   <!-- 6-STAT RPG ATTRIBUTES BAR -->
@@ -239,12 +248,13 @@
     <span id="disp-cha">✨ CHA: 10</span>
   </div>
 
-  <!-- GAME SCREEN -->
-  <canvas id="gameCanvas" width="500" height="230"></canvas>
+  <!-- BIGGER GAME SCREEN -->
+  <canvas id="gameCanvas" width="600" height="340"></canvas>
 
   <!-- ACTION CONTROLS -->
   <div id="action-panel">
     <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
+    <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
     <button id="sell-btn" onclick="sellDish()" disabled>Sell Dish</button>
     <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
     <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
@@ -253,63 +263,57 @@
   <!-- MOBILE CONTROLS -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
-    <button id="attack-btn" onclick="triggerAttack()">⚔️ ATTACK</button>
+    <div class="button-group">
+      <button class="action-circle-btn" id="dodge-btn" onclick="triggerDodge()">🏃‍♂️ DODGE</button>
+      <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ ATTACK</button>
+    </div>
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Welcome! Tap 📜 STATS to see what your 6 attributes do, or 🛒 SHOP to upgrade!</div>
+  <div id="log">Welcome! Screen is bigger. Use 🍲 Eat Stew to restore HP when low, or tap 🏃‍♂️ DODGE to roll away!</div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
     <div class="modal-content">
       <h3 style="color: #f9e2af; margin-top:0; text-align:center;">🛒 Attribute Training Shop</h3>
-      
       <div class="shop-item">
-        <span><strong>💪 Strength (+2 STR)</strong><br><small>Increases Melee DMG & Carry Bag Limit</small></span>
+        <span><strong>💪 Strength (+2 STR)</strong><br><small>Melee DMG & Bag Limit</small></span>
         <button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Increases Speed & Dodge Chance</small></span>
+        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Speed & Dodge Chance</small></span>
         <button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>🛡️ Constitution (+2 CON)</strong><br><small>Increases Max HP & Defense (+Heal)</small></span>
+        <span><strong>🛡️ Constitution (+2 CON)</strong><br><small>Max HP & Defense</small></span>
         <button onclick="buyUpgrade('con')" id="btn-con">20 🪙</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>🧠 Intelligence (+2 INT)</strong><br><small>Increases Dish Gold Value</small></span>
+        <span><strong>🧠 Intelligence (+2 INT)</strong><br><small>Dish Gold Value</small></span>
         <button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>👁️ Wisdom (+2 WIS)</strong><br><small>Increases Double-Meat Harvest Chance</small></span>
+        <span><strong>👁️ Wisdom (+2 WIS)</strong><br><small>Double-Meat Chance</small></span>
         <button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>✨ Charisma (+2 CHA)</strong><br><small>Lowers Shop Prices & Adds Sell Tips</small></span>
+        <span><strong>✨ Charisma (+2 CHA)</strong><br><small>Lower Shop Prices</small></span>
         <button onclick="buyUpgrade('cha')" id="btn-cha">20 🪙</button>
       </div>
-
       <button class="close-btn" onclick="closeModal('shop-modal')">Close Shop</button>
     </div>
   </div>
 
-  <!-- CHARACTER SHEET MODAL (EXPLAINS ALL 6 STATS) -->
+  <!-- CHARACTER SHEET MODAL -->
   <div id="char-modal" class="modal">
     <div class="modal-content" style="border-color: #cba6f7;">
       <h3 style="color: #cba6f7; margin-top:0; text-align:center;">📜 Character Attributes</h3>
-      
       <div class="stat-desc" id="desc-str"></div>
       <div class="stat-desc" id="desc-dex"></div>
       <div class="stat-desc" id="desc-con"></div>
       <div class="stat-desc" id="desc-int"></div>
       <div class="stat-desc" id="desc-wis"></div>
       <div class="stat-desc" id="desc-cha"></div>
-
       <button class="close-btn" onclick="closeModal('char-modal')">Close Sheet</button>
     </div>
   </div>
@@ -319,50 +323,47 @@
     const ctx = canvas.getContext("2d");
     const logEl = document.getElementById("log");
 
-    // Player Data & Full 6 RPG Attributes
     const player = {
-      x: 50,
-      y: 95,
-      size: 26,
+      x: 100,
+      y: 150,
+      size: 28,
       hp: 100,
       gold: 0,
       rawMeat: 0,
       cookedDishes: 0,
-      // 6 Core Attributes (Starting at 10)
-      str: 10, // Strength
-      dex: 10, // Dexterity / Agility
-      con: 10, // Constitution / Endurance
-      int: 10, // Intelligence
-      wis: 10, // Wisdom / Intuition
-      cha: 10  // Charisma
+      isDodging: false,
+      dodgeTimer: 0,
+      str: 10,
+      dex: 10,
+      con: 10,
+      int: 10,
+      wis: 10,
+      cha: 10
     };
 
-    // Derived Gameplay Formulas from the 6 Stats
     function getAttackDmg() { return player.str; }
-    function getMaxBagWeight() { return Math.floor(player.str / 2); } // 10 STR = 5 Meat capacity
-    function getMoveSpeed() { return 2.5 + (player.dex * 0.1); }
-    function getDodgeChance() { return Math.min(60, (player.dex - 8) * 3); } // % chance to dodge
-    function getMaxHp() { return 50 + (player.con * 5); } // 10 CON = 100 Max HP
+    function getMaxBagWeight() { return Math.floor(player.str / 2); }
+    function getMoveSpeed() { return 3 + (player.dex * 0.1); }
+    function getDodgeChance() { return Math.min(65, (player.dex - 8) * 4); }
+    function getMaxHp() { return 50 + (player.con * 5); }
     function getDamageReduction() { return Math.floor((player.con - 10) / 2); }
     function getDishSellPrice() { return 10 + Math.floor(player.int * 0.8) + Math.floor(player.cha * 0.5); }
-    function getDoubleDropChance() { return Math.min(75, (player.wis - 8) * 4); } // % chance for 2x meat
+    function getDoubleDropChance() { return Math.min(75, (player.wis - 8) * 4); }
     function getUpgradeCost() {
       let discount = Math.floor((player.cha - 10) * 1.5);
       return Math.max(5, 20 - discount);
     }
 
-    // Enemy Data
     let enemy = {
-      x: 360,
-      y: 95,
-      size: 30,
+      x: 450,
+      y: 150,
+      size: 34,
       hp: 30,
       maxHp: 30,
       atk: 12,
       alive: true
     };
 
-    // Keyboard & Joystick Controls
     const keys = {};
     window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
     window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
@@ -404,9 +405,11 @@
       document.getElementById("stat-gold").textContent = `🪙 ${player.gold}`;
       document.getElementById("stat-meat").textContent = `🥩 ${player.rawMeat}/${maxBag}`;
       document.getElementById("stat-dish").textContent = `🍖 ${player.cookedDishes}`;
-      document.getElementById("stat-hp").textContent = `HP: ${player.hp}/${maxHp}`;
+      
+      const hpEl = document.getElementById("stat-hp");
+      hpEl.textContent = `HP: ${player.hp}/${maxHp}`;
+      hpEl.style.color = player.hp < (maxHp * 0.3) ? "#f38ba8" : "#a6e3a1";
 
-      // Update 6-Stat Bar
       document.getElementById("disp-str").textContent = `💪 STR: ${player.str}`;
       document.getElementById("disp-dex").textContent = `⚡ DEX: ${player.dex}`;
       document.getElementById("disp-con").textContent = `🛡️ CON: ${player.con}`;
@@ -414,38 +417,50 @@
       document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
       document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
 
-      // Buttons
       document.getElementById("cook-btn").disabled = player.rawMeat < 1;
+      
+      const healBtn = document.getElementById("heal-btn");
+      healBtn.disabled = player.cookedDishes < 1 || player.hp >= maxHp;
+
       const sellBtn = document.getElementById("sell-btn");
       sellBtn.disabled = player.cookedDishes < 1;
       sellBtn.textContent = `Sell (+${getDishSellPrice()} 🪙)`;
 
-      // Shop Button Costs
       ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(stat => {
         document.getElementById(`btn-${stat}`).textContent = `${cost} 🪙`;
       });
 
-      // Character Sheet Descriptions
-      document.getElementById("desc-str").innerHTML = `<strong>💪 Strength (${player.str}):</strong> Physical power & carry limit.<br><em>Effect: ${getAttackDmg()} Melee DMG | Max Carry: ${maxBag} Meat</em>`;
-      document.getElementById("desc-dex").innerHTML = `<strong>⚡ Dexterity / Agility (${player.dex}):</strong> Speed, reflex & dodge.<br><em>Effect: Speed ${getMoveSpeed().toFixed(1)} | ${getDodgeChance()}% Dodge Chance</em>`;
-      document.getElementById("desc-con").innerHTML = `<strong>🛡️ Constitution / Endurance (${player.con}):</strong> Durability & health.<br><em>Effect: ${maxHp} Max HP | -${getDamageReduction()} DMG Taken</em>`;
-      document.getElementById("desc-int").innerHTML = `<strong>🧠 Intelligence (${player.int}):</strong> Logic, recipe mastery & arcane skill.<br><em>Effect: Boosts base cooked dish quality & gold value</em>`;
-      document.getElementById("desc-wis").innerHTML = `<strong>👁️ Wisdom / Intuition (${player.wis}):</strong> Perception & hunting instinct.<br><em>Effect: ${getDoubleDropChance()}% chance to harvest 2x Meat</em>`;
-      document.getElementById("desc-cha").innerHTML = `<strong>✨ Charisma (${player.cha}):</strong> Social influence & persuasion.<br><em>Effect: Shop upgrades cost ${cost} 🪙 + extra customer tips</em>`;
+      document.getElementById("desc-str").innerHTML = `<strong>💪 Strength (${player.str}):</strong> Carry weight & damage.<br><em>Effect: ${getAttackDmg()} DMG | Max Carry: ${maxBag} Meat</em>`;
+      document.getElementById("desc-dex").innerHTML = `<strong>⚡ Dexterity (${player.dex}):</strong> Speed & reflex.<br><em>Effect: Speed ${getMoveSpeed().toFixed(1)} | ${getDodgeChance()}% Dodge Chance</em>`;
+      document.getElementById("desc-con").innerHTML = `<strong>🛡️ Constitution (${player.con}):</strong> Health & defense.<br><em>Effect: ${maxHp} Max HP | -${getDamageReduction()} DMG Taken</em>`;
+      document.getElementById("desc-int").innerHTML = `<strong>🧠 Intelligence (${player.int}):</strong> Logic & research.<br><em>Effect: Boosts dish gold value</em>`;
+      document.getElementById("desc-wis").innerHTML = `<strong>👁️ Wisdom (${player.wis}):</strong> Intuition.<br><em>Effect: ${getDoubleDropChance()}% chance for 2x meat</em>`;
+      document.getElementById("desc-cha").innerHTML = `<strong>✨ Charisma (${player.cha}):</strong> Persuasion.<br><em>Effect: Shop upgrades cost ${cost} 🪙</em>`;
     }
 
     function respawnEnemy() {
       enemy.hp = enemy.maxHp;
       enemy.alive = true;
-      enemy.x = Math.floor(Math.random() * (canvas.width - 80)) + 60;
-      enemy.y = Math.floor(Math.random() * (canvas.height - 60)) + 30;
+      enemy.x = Math.floor(Math.random() * (canvas.width - 100)) + 50;
+      enemy.y = Math.floor(Math.random() * (canvas.height - 100)) + 50;
     }
 
     function cookDish() {
       if (player.rawMeat >= 1) {
         player.rawMeat--;
         player.cookedDishes++;
-        logEl.textContent = "Cooked 1 Raw Meat into a gourmet dish! 🍖";
+        logEl.textContent = "Cooked 1 Raw Meat into a hearty dish! 🍖";
+        updateUI();
+      }
+    }
+
+    function healPlayer() {
+      const maxHp = getMaxHp();
+      if (player.cookedDishes >= 1 && player.hp < maxHp) {
+        player.cookedDishes--;
+        const healAmount = Math.floor(maxHp * 0.5); // Restores 50% HP
+        player.hp = Math.min(maxHp, player.hp + healAmount);
+        logEl.textContent = `🍲 Ate a hot stew and restored ${healAmount} HP!`;
         updateUI();
       }
     }
@@ -455,9 +470,18 @@
         player.cookedDishes--;
         const earned = getDishSellPrice();
         player.gold += earned;
-        logEl.textContent = `Sold dish for ${earned} Gold (INT + CHA bonuses)! 🪙`;
+        logEl.textContent = `Sold dish for ${earned} Gold! 🪙`;
         updateUI();
       }
+    }
+
+    // Manual Dodge Button Action
+    function triggerDodge() {
+      if (player.dodgeTimer > 0 || player.hp <= 0) return;
+      player.isDodging = true;
+      player.dodgeTimer = 45; // Cooldown frames
+      logEl.textContent = "🏃‍♂️ DODGED! You rolled smoothly out of harm's way!";
+      setTimeout(() => { player.isDodging = false; }, 300); // 0.3s invulnerability window
     }
 
     function triggerAttack() {
@@ -465,10 +489,9 @@
       const distanceX = Math.abs((player.x + player.size/2) - (enemy.x + enemy.size/2));
       const distanceY = Math.abs((player.y + player.size/2) - (enemy.y + enemy.size/2));
 
-      if (distanceX < 55 && distanceY < 55) {
-        // Check Carry Weight Limit before harvesting
+      if (distanceX < 65 && distanceY < 65) {
         if (player.rawMeat >= getMaxBagWeight()) {
-          logEl.textContent = "Bag is FULL! Cook your meat or upgrade STR to carry more! 🎒";
+          logEl.textContent = "Bag is FULL! Cook your meat or upgrade STR! 🎒";
           return;
         }
 
@@ -477,7 +500,6 @@
 
         if (enemy.hp <= 0) {
           enemy.alive = false;
-          // Wisdom check for double meat harvest
           const isDouble = (Math.random() * 100) < getDoubleDropChance();
           const gained = isDouble ? 2 : 1;
           player.rawMeat = Math.min(getMaxBagWeight(), player.rawMeat + gained);
@@ -487,22 +509,21 @@
             : `Defeated Slime! Harvested 1x Raw Meat (🥩).`;
           
           updateUI();
-          setTimeout(respawnEnemy, 1400);
+          setTimeout(respawnEnemy, 1500);
         } else {
-          // Dexterity Dodge Roll
-          const dodged = (Math.random() * 100) < getDodgeChance();
-          if (dodged) {
-            logEl.textContent = `Hit for ${dmg} DMG! ⚡ DODGED the Slime's counter-attack!`;
+          // Check if player is dodging or rolls a passive dodge
+          if (player.isDodging || (Math.random() * 100) < getDodgeChance()) {
+            logEl.textContent = `Hit slime for ${dmg} DMG! ⚡ Successfully dodged the counter-attack!`;
           } else {
             const taken = Math.max(1, enemy.atk - getDamageReduction());
             player.hp = Math.max(0, player.hp - taken);
-            logEl.textContent = `Hit for ${dmg} DMG! Took ${taken} DMG (CON reduced).`;
+            logEl.textContent = `Hit slime for ${dmg} DMG! Took ${taken} DMG. (Tip: Use 🍲 Eat Stew when HP is low!)`;
             if (player.hp === 0) logEl.textContent = "You fainted! Refresh page to restart.";
           }
         }
         updateUI();
       } else {
-        logEl.textContent = "Too far away! Move closer to the slime.";
+        logEl.textContent = "Too far away from the slime!";
       }
     }
 
@@ -514,8 +535,8 @@
       if (player.gold >= cost) {
         player.gold -= cost;
         player[stat] += 2;
-        if (stat === 'con') player.hp = getMaxHp(); // Full heal when upgrading CON
-        logEl.textContent = `Trained ${stat.toUpperCase()} +2! Check 📜 STATS for new bonuses.`;
+        if (stat === 'con') player.hp = getMaxHp(); // Full heal on CON upgrade
+        logEl.textContent = `Trained ${stat.toUpperCase()} +2! Check 📜 STATS.`;
         updateUI();
       } else {
         logEl.textContent = `Not enough Gold! Need ${cost} 🪙.`;
@@ -524,6 +545,8 @@
 
     function update() {
       if (player.hp <= 0) return;
+      if (player.dodgeTimer > 0) player.dodgeTimer--;
+
       let moveX = joystickMoveX;
       let moveY = joystickMoveY;
 
@@ -532,7 +555,7 @@
       if (keys["a"] || keys["arrowleft"]) moveX = -1;
       if (keys["d"] || keys["arrowright"]) moveX = 1;
 
-      const spd = getMoveSpeed();
+      const spd = getMoveSpeed() * (player.isDodging ? 1.8 : 1.0); // Boost speed while rolling
       if (moveX !== 0 || moveY !== 0) {
         player.x += moveX * spd;
         player.y += moveY * spd;
@@ -545,8 +568,8 @@
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Player
-      ctx.fillStyle = "#89b4fa";
+      // Draw Player (Semitransparent if dodging)
+      ctx.fillStyle = player.isDodging ? "rgba(137, 180, 250, 0.5)" : "#89b4fa";
       ctx.fillRect(player.x, player.y, player.size, player.size);
 
       // Draw Enemy
@@ -554,21 +577,4 @@
         ctx.fillStyle = "#f38ba8";
         ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
 
-        ctx.fillStyle = "#45475a";
-        ctx.fillRect(enemy.x, enemy.y - 6, enemy.size, 4);
-        ctx.fillStyle = "#a6e3a1";
-        ctx.fillRect(enemy.x, enemy.y - 6, enemy.size * (enemy.hp / enemy.maxHp), 4);
-      }
-    }
-
-    function gameLoop() {
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-
-    updateUI();
-    gameLoop();
-  </script>
-</body>
-</html>
+        ctx.fillStyle = "#45475
