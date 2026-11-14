@@ -14,6 +14,23 @@ body {
   -webkit-user-select: none;
 }
 
+/* Alert Banner Popup */
+#alert-banner {
+  width: 100%;
+  max-width: 600px;
+  background-color: #f38ba8;
+  color: #11111b;
+  text-align: center;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
 #ui-bar {
   width: 100%;
   max-width: 600px;
@@ -178,7 +195,7 @@ button:disabled {
   top: 26px;
   left: 26px;
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .button-group {
@@ -195,29 +212,12 @@ button:disabled {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   touch-action: manipulation;
 }
 
-.action-circle-btn:active {
-  transform: scale(0.93);
-}
-
-#grab-btn {
-  background-color: #a6e3a1;
-  color: #11111b;
-  width: 68px;
-  height: 68px;
-  font-size: 11px;
-}
-
-#attack-btn {
-  background-color: #f38ba8;
-  color: #11111b;
-  width: 82px;
-  height: 82px;
-  font-size: 12px;
-}
+#action-btn { background-color: #a6e3a1; color: #11111b; width: 70px; height: 70px; font-size: 11px; }
+#attack-btn { background-color: #f38ba8; color: #11111b; width: 78px; height: 78px; font-size: 11px; }
 
 #log {
   width: 100%;
@@ -237,7 +237,7 @@ button:disabled {
   display: none;
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0,0,0,0.75);
   justify-content: center;
   align-items: center;
   z-index: 10;
@@ -260,10 +260,12 @@ button:disabled {
 .modal-purple { border-color: #cba6f7; }
 .modal-blue { border-color: #89dceb; }
 .modal-orange { border-color: #fab387; }
+.modal-pink { border-color: #f38ba8; }
 .modal-title-gold { color: #f9e2af; margin-top: 0; text-align: center; }
 .modal-title-purple { color: #cba6f7; margin-top: 0; text-align: center; }
 .modal-title-blue { color: #89dceb; margin-top: 0; text-align: center; }
 .modal-title-orange { color: #fab387; margin-top: 0; text-align: center; }
+.modal-title-pink { color: #f38ba8; margin-top: 0; text-align: center; }
 
 .shop-item {
   display: flex;
