@@ -56,8 +56,8 @@
   <!-- ACTION PANEL -->
   <div id="action-panel">
     <div id="town-controls" class="action-group">
-      <button id="inn-btn" onclick="sleepAtInn()" style="background-color: #fab387;">🛌 Inn (Heal)</button>
-      <button id="camp-btn" onclick="restAtCamp()" style="background-color: #a6e3a1;">⛺ Camp (Free)</button>
+      <button id="inn-btn" onclick="sleepAtInn()" style="background-color: #fab387;">🛌 Inn</button>
+      <button id="camp-btn" onclick="restAtCamp()" style="background-color: #a6e3a1;">⛺ Camp</button>
       <button id="guild-btn" onclick="openModal('guild-modal')" style="background-color: #89dceb;">⚔️ Guild</button>
       <button id="kitchen-btn" onclick="openModal('kitchen-modal')">🍳 Kitchen</button>
       <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #cba6f7;">🗣️ Town</button>
@@ -67,9 +67,10 @@
     </div>
   </div>
 
-  <!-- SAVE / LOAD BAR -->
+  <!-- SAVE / CHEAT BAR -->
   <div id="save-panel">
     <button id="save-btn" onclick="saveGame()">💾 Save</button>
+    <button id="cheat-btn" onclick="openCheatPrompt()" style="background-color: #f9e2af; color:#111;">🎁 Codes</button>
     <button id="reset-btn" onclick="resetGame()">🔄 Reset</button>
   </div>
 
@@ -192,6 +193,60 @@
       <button class="close-btn" onclick="closeModal('char-modal')">Close</button>
     </div>
   </div>
+
+  <!-- SOUND SYNTHESIS SCRIPT (Web Audio API Sound Effects) -->
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      let now = audioCtx.currentTime;
+
+      if (type === 'heroAttack') {
+        // High swoosh / slash sound
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'walk' || type === 'run') {
+        // Short footstep click
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(type === 'run' ? 180 : 120, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'monsterAttack') {
+        // Deep low monster thud/strike
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'npcTalk') {
+        // High chirp blip for dialogue
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.setValueAtTime(800, now + 0.04);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+    }
+  </script>
 
   <script src="town.js"></script>
   <script src="forest.js"></script>
