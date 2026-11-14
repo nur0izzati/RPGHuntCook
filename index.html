@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Mobile Ready</title>
+  <title>RPGHuntCook - Full 6-Stat System</title>
   <style>
     body {
       background-color: #1e1e2e;
@@ -15,16 +15,17 @@
       justify-content: flex-start;
       min-height: 100vh;
       margin: 0;
-      padding: 10px;
+      padding: 8px;
       box-sizing: border-box;
-      touch-action: none; /* Prevents accidental zooming/scrolling on mobile */
+      touch-action: none;
     }
 
+    /* Top Resource & Health Bar */
     #ui-bar {
       width: 100%;
       max-width: 500px;
       background-color: #313244;
-      padding: 10px;
+      padding: 8px 10px;
       box-sizing: border-box;
       border-radius: 8px 8px 0 0;
       display: flex;
@@ -35,15 +36,33 @@
       border-bottom: none;
     }
 
+    /* 6-Stat RPG Grid */
+    #stats-bar {
+      width: 100%;
+      max-width: 500px;
+      background-color: #252533;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      font-size: 11px;
+      color: #b4befe;
+      border-left: 2px solid #45475a;
+      border-right: 2px solid #45475a;
+      text-align: center;
+    }
+
     canvas {
       background-color: #181825;
       border: 2px solid #45475a;
       display: block;
       width: 100%;
       max-width: 500px;
-      height: 280px;
+      height: 230px;
     }
 
+    /* Action Buttons */
     #action-panel {
       width: 100%;
       max-width: 500px;
@@ -54,18 +73,18 @@
       border-top: none;
       display: flex;
       justify-content: space-between;
-      gap: 8px;
+      gap: 5px;
     }
 
     button {
       background-color: #89b4fa;
       color: #11111b;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 6px;
       font-weight: bold;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       flex: 1;
     }
 
@@ -75,6 +94,10 @@
       cursor: not-allowed;
     }
 
+    #shop-btn { background-color: #f9e2af; }
+    #char-btn { background-color: #cba6f7; }
+
+    /* Mobile Controls */
     #mobile-controls {
       width: 100%;
       max-width: 500px;
@@ -82,17 +105,16 @@
       justify-content: space-between;
       align-items: center;
       background-color: #242433;
-      padding: 15px;
+      padding: 10px 15px;
       box-sizing: border-box;
       border: 2px solid #45475a;
       border-top: none;
       border-radius: 0 0 8px 8px;
     }
 
-    /* Virtual Joystick Area */
     #joystick-base {
-      width: 100px;
-      height: 100px;
+      width: 85px;
+      height: 85px;
       background-color: rgba(69, 71, 90, 0.6);
       border-radius: 50%;
       position: relative;
@@ -100,203 +122,322 @@
     }
 
     #joystick-knob {
-      width: 45px;
-      height: 45px;
+      width: 36px;
+      height: 36px;
       background-color: #89b4fa;
       border-radius: 50%;
       position: absolute;
-      top: 27.5px;
-      left: 27.5px;
+      top: 24.5px;
+      left: 24.5px;
       pointer-events: none;
     }
 
     #attack-btn {
-      width: 90px;
-      height: 90px;
+      width: 75px;
+      height: 75px;
       background-color: #f38ba8;
       color: #11111b;
       border-radius: 50%;
       border: none;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: bold;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       cursor: pointer;
-    }
-
-    #attack-btn:active {
-      background-color: #eba0ac;
-      transform: scale(0.95);
     }
 
     #log {
       width: 100%;
       max-width: 500px;
-      margin-top: 8px;
-      padding: 8px 12px;
+      margin-top: 6px;
+      padding: 8px 10px;
       background-color: #313244;
       border-radius: 8px;
       box-sizing: border-box;
-      font-size: 12px;
+      font-size: 11px;
       color: #a6e3a1;
       min-height: 20px;
       border: 2px solid #45475a;
+    }
+
+    /* Modals (Shop & Character Sheet) */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.75);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .modal-content {
+      background-color: #313244;
+      border: 2px solid #f9e2af;
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 380px;
+      max-height: 85vh;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #181825;
+      padding: 8px 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .shop-item button {
+      max-width: 70px;
+      margin-left: 8px;
+    }
+
+    .stat-desc {
+      background-color: #181825;
+      padding: 8px;
+      margin: 6px 0;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .close-btn {
+      background-color: #f38ba8;
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
     }
   </style>
 </head>
 <body>
 
-  <!-- RPG INFO & STATS -->
+  <!-- TOP RESOURCE & HP BAR -->
   <div id="ui-bar">
     <span id="stat-gold">🪙 0</span>
-    <span id="stat-meat">🥩 0</span>
+    <span id="stat-meat">🥩 0/5</span>
     <span id="stat-dish">🍖 0</span>
-    <span id="stat-hp">HP: 100</span>
+    <span id="stat-hp">HP: 100/100</span>
+  </div>
+
+  <!-- 6-STAT RPG ATTRIBUTES BAR -->
+  <div id="stats-bar">
+    <span id="disp-str">💪 STR: 10</span>
+    <span id="disp-dex">⚡ DEX: 10</span>
+    <span id="disp-con">🛡️ CON: 10</span>
+    <span id="disp-int">🧠 INT: 10</span>
+    <span id="disp-wis">👁️ WIS: 10</span>
+    <span id="disp-cha">✨ CHA: 10</span>
   </div>
 
   <!-- GAME SCREEN -->
-  <canvas id="gameCanvas" width="500" height="280"></canvas>
+  <canvas id="gameCanvas" width="500" height="230"></canvas>
 
-  <!-- KITCHEN CONTROLS -->
+  <!-- ACTION CONTROLS -->
   <div id="action-panel">
     <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
-    <button id="sell-btn" onclick="sellDish()" disabled>Sell (+15 🪙)</button>
+    <button id="sell-btn" onclick="sellDish()" disabled>Sell Dish</button>
+    <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
+    <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
   </div>
 
-  <!-- MOBILE VIRTUAL CONTROLS -->
+  <!-- MOBILE CONTROLS -->
   <div id="mobile-controls">
-    <div id="joystick-base">
-      <div id="joystick-knob"></div>
-    </div>
+    <div id="joystick-base"><div id="joystick-knob"></div></div>
     <button id="attack-btn" onclick="triggerAttack()">⚔️ ATTACK</button>
   </div>
 
-  <!-- GAME MESSAGE LOG -->
-  <div id="log">Use the joystick to move. Bump or press Attack near the slime!</div>
+  <!-- MESSAGE LOG -->
+  <div id="log">Welcome! Tap 📜 STATS to see what your 6 attributes do, or 🛒 SHOP to upgrade!</div>
+
+  <!-- SHOP MODAL -->
+  <div id="shop-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="color: #f9e2af; margin-top:0; text-align:center;">🛒 Attribute Training Shop</h3>
+      
+      <div class="shop-item">
+        <span><strong>💪 Strength (+2 STR)</strong><br><small>Increases Melee DMG & Carry Bag Limit</small></span>
+        <button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button>
+      </div>
+
+      <div class="shop-item">
+        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Increases Speed & Dodge Chance</small></span>
+        <button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button>
+      </div>
+
+      <div class="shop-item">
+        <span><strong>🛡️ Constitution (+2 CON)</strong><br><small>Increases Max HP & Defense (+Heal)</small></span>
+        <button onclick="buyUpgrade('con')" id="btn-con">20 🪙</button>
+      </div>
+
+      <div class="shop-item">
+        <span><strong>🧠 Intelligence (+2 INT)</strong><br><small>Increases Dish Gold Value</small></span>
+        <button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button>
+      </div>
+
+      <div class="shop-item">
+        <span><strong>👁️ Wisdom (+2 WIS)</strong><br><small>Increases Double-Meat Harvest Chance</small></span>
+        <button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button>
+      </div>
+
+      <div class="shop-item">
+        <span><strong>✨ Charisma (+2 CHA)</strong><br><small>Lowers Shop Prices & Adds Sell Tips</small></span>
+        <button onclick="buyUpgrade('cha')" id="btn-cha">20 🪙</button>
+      </div>
+
+      <button class="close-btn" onclick="closeModal('shop-modal')">Close Shop</button>
+    </div>
+  </div>
+
+  <!-- CHARACTER SHEET MODAL (EXPLAINS ALL 6 STATS) -->
+  <div id="char-modal" class="modal">
+    <div class="modal-content" style="border-color: #cba6f7;">
+      <h3 style="color: #cba6f7; margin-top:0; text-align:center;">📜 Character Attributes</h3>
+      
+      <div class="stat-desc" id="desc-str"></div>
+      <div class="stat-desc" id="desc-dex"></div>
+      <div class="stat-desc" id="desc-con"></div>
+      <div class="stat-desc" id="desc-int"></div>
+      <div class="stat-desc" id="desc-wis"></div>
+      <div class="stat-desc" id="desc-cha"></div>
+
+      <button class="close-btn" onclick="closeModal('char-modal')">Close Sheet</button>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const logEl = document.getElementById("log");
 
-    // Player Data
+    // Player Data & Full 6 RPG Attributes
     const player = {
       x: 50,
-      y: 110,
-      size: 28,
-      speed: 3.5,
+      y: 95,
+      size: 26,
       hp: 100,
-      maxHp: 100,
       gold: 0,
       rawMeat: 0,
-      cookedDishes: 0
+      cookedDishes: 0,
+      // 6 Core Attributes (Starting at 10)
+      str: 10, // Strength
+      dex: 10, // Dexterity / Agility
+      con: 10, // Constitution / Endurance
+      int: 10, // Intelligence
+      wis: 10, // Wisdom / Intuition
+      cha: 10  // Charisma
     };
+
+    // Derived Gameplay Formulas from the 6 Stats
+    function getAttackDmg() { return player.str; }
+    function getMaxBagWeight() { return Math.floor(player.str / 2); } // 10 STR = 5 Meat capacity
+    function getMoveSpeed() { return 2.5 + (player.dex * 0.1); }
+    function getDodgeChance() { return Math.min(60, (player.dex - 8) * 3); } // % chance to dodge
+    function getMaxHp() { return 50 + (player.con * 5); } // 10 CON = 100 Max HP
+    function getDamageReduction() { return Math.floor((player.con - 10) / 2); }
+    function getDishSellPrice() { return 10 + Math.floor(player.int * 0.8) + Math.floor(player.cha * 0.5); }
+    function getDoubleDropChance() { return Math.min(75, (player.wis - 8) * 4); } // % chance for 2x meat
+    function getUpgradeCost() {
+      let discount = Math.floor((player.cha - 10) * 1.5);
+      return Math.max(5, 20 - discount);
+    }
 
     // Enemy Data
     let enemy = {
       x: 360,
-      y: 110,
-      size: 32,
+      y: 95,
+      size: 30,
       hp: 30,
       maxHp: 30,
-      atk: 10,
+      atk: 12,
       alive: true
     };
 
-    // Keyboard Tracking (for PC testing)
+    // Keyboard & Joystick Controls
     const keys = {};
     window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
     window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
 
-    // Joystick State
-    let joystickActive = false;
-    let joystickMoveX = 0;
-    let joystickMoveY = 0;
-
+    let joystickActive = false, joystickMoveX = 0, joystickMoveY = 0;
     const base = document.getElementById("joystick-base");
     const knob = document.getElementById("joystick-knob");
 
-    // Touch Handling for Joystick
-    base.addEventListener("touchstart", handleTouchStart, {passive: false});
-    base.addEventListener("touchmove", handleTouchMove, {passive: false});
-    base.addEventListener("touchend", handleTouchEnd, {passive: false});
-
-    // Mouse support for joystick on PC browsers too
+    base.addEventListener("touchstart", (e) => { e.preventDefault(); joystickActive = true; handleMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
+    base.addEventListener("touchmove", (e) => { e.preventDefault(); if (joystickActive) handleMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
+    base.addEventListener("touchend", (e) => { e.preventDefault(); resetJoystick(); }, {passive: false});
     base.addEventListener("mousedown", (e) => { joystickActive = true; handleMove(e.clientX, e.clientY); });
     window.addEventListener("mousemove", (e) => { if (joystickActive) handleMove(e.clientX, e.clientY); });
-    window.addEventListener("mouseup", () => { resetJoystick(); });
-
-    function handleTouchStart(e) {
-      e.preventDefault();
-      joystickActive = true;
-      const touch = e.touches[0];
-      handleMove(touch.clientX, touch.clientY);
-    }
-
-    function handleTouchMove(e) {
-      e.preventDefault();
-      if (!joystickActive) return;
-      const touch = e.touches[0];
-      handleMove(touch.clientX, touch.clientY);
-    }
-
-    function handleTouchEnd(e) {
-      e.preventDefault();
-      resetJoystick();
-    }
+    window.addEventListener("mouseup", resetJoystick);
 
     function handleMove(clientX, clientY) {
       const rect = base.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      
-      const dx = clientX - centerX;
-      const dy = clientY - centerY;
+      const dx = clientX - (rect.left + rect.width / 2);
+      const dy = clientY - (rect.top + rect.height / 2);
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const maxRadius = 40; // Max joystick pull distance
-
+      const maxRadius = 35;
       let angle = Math.atan2(dy, dx);
       let pull = Math.min(distance, maxRadius);
-
       joystickMoveX = Math.cos(angle) * (pull / maxRadius);
       joystickMoveY = Math.sin(angle) * (pull / maxRadius);
-
-      // Move knob visually
       knob.style.transform = `translate(${Math.cos(angle) * pull}px, ${Math.sin(angle) * pull}px)`;
     }
 
     function resetJoystick() {
-      joystickActive = false;
-      joystickMoveX = 0;
-      joystickMoveY = 0;
+      joystickActive = false; joystickMoveX = 0; joystickMoveY = 0;
       knob.style.transform = `translate(0px, 0px)`;
     }
 
     function updateUI() {
+      const maxHp = getMaxHp();
+      const maxBag = getMaxBagWeight();
+      const cost = getUpgradeCost();
+
       document.getElementById("stat-gold").textContent = `🪙 ${player.gold}`;
-      document.getElementById("stat-meat").textContent = `🥩 ${player.rawMeat}`;
+      document.getElementById("stat-meat").textContent = `🥩 ${player.rawMeat}/${maxBag}`;
       document.getElementById("stat-dish").textContent = `🍖 ${player.cookedDishes}`;
-      document.getElementById("stat-hp").textContent = `HP: ${player.hp}`;
+      document.getElementById("stat-hp").textContent = `HP: ${player.hp}/${maxHp}`;
 
+      // Update 6-Stat Bar
+      document.getElementById("disp-str").textContent = `💪 STR: ${player.str}`;
+      document.getElementById("disp-dex").textContent = `⚡ DEX: ${player.dex}`;
+      document.getElementById("disp-con").textContent = `🛡️ CON: ${player.con}`;
+      document.getElementById("disp-int").textContent = `🧠 INT: ${player.int}`;
+      document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
+      document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
+
+      // Buttons
       document.getElementById("cook-btn").disabled = player.rawMeat < 1;
-      document.getElementById("sell-btn").disabled = player.cookedDishes < 1;
-    }
+      const sellBtn = document.getElementById("sell-btn");
+      sellBtn.disabled = player.cookedDishes < 1;
+      sellBtn.textContent = `Sell (+${getDishSellPrice()} 🪙)`;
 
-    function isColliding(a, b) {
-      return (
-        a.x < b.x + b.size &&
-        a.x + a.size > b.x &&
-        a.y < b.y + b.size &&
-        a.y + a.size > b.y
-      );
+      // Shop Button Costs
+      ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(stat => {
+        document.getElementById(`btn-${stat}`).textContent = `${cost} 🪙`;
+      });
+
+      // Character Sheet Descriptions
+      document.getElementById("desc-str").innerHTML = `<strong>💪 Strength (${player.str}):</strong> Physical power & carry limit.<br><em>Effect: ${getAttackDmg()} Melee DMG | Max Carry: ${maxBag} Meat</em>`;
+      document.getElementById("desc-dex").innerHTML = `<strong>⚡ Dexterity / Agility (${player.dex}):</strong> Speed, reflex & dodge.<br><em>Effect: Speed ${getMoveSpeed().toFixed(1)} | ${getDodgeChance()}% Dodge Chance</em>`;
+      document.getElementById("desc-con").innerHTML = `<strong>🛡️ Constitution / Endurance (${player.con}):</strong> Durability & health.<br><em>Effect: ${maxHp} Max HP | -${getDamageReduction()} DMG Taken</em>`;
+      document.getElementById("desc-int").innerHTML = `<strong>🧠 Intelligence (${player.int}):</strong> Logic, recipe mastery & arcane skill.<br><em>Effect: Boosts base cooked dish quality & gold value</em>`;
+      document.getElementById("desc-wis").innerHTML = `<strong>👁️ Wisdom / Intuition (${player.wis}):</strong> Perception & hunting instinct.<br><em>Effect: ${getDoubleDropChance()}% chance to harvest 2x Meat</em>`;
+      document.getElementById("desc-cha").innerHTML = `<strong>✨ Charisma (${player.cha}):</strong> Social influence & persuasion.<br><em>Effect: Shop upgrades cost ${cost} 🪙 + extra customer tips</em>`;
     }
 
     function respawnEnemy() {
       enemy.hp = enemy.maxHp;
       enemy.alive = true;
-      enemy.x = Math.floor(Math.random() * (canvas.width - 100)) + 80;
+      enemy.x = Math.floor(Math.random() * (canvas.width - 80)) + 60;
       enemy.y = Math.floor(Math.random() * (canvas.height - 60)) + 30;
     }
 
@@ -304,7 +445,7 @@
       if (player.rawMeat >= 1) {
         player.rawMeat--;
         player.cookedDishes++;
-        logEl.textContent = "Cooked 1 Raw Meat into a Skewer! 🍖";
+        logEl.textContent = "Cooked 1 Raw Meat into a gourmet dish! 🍖";
         updateUI();
       }
     }
@@ -312,43 +453,77 @@
     function sellDish() {
       if (player.cookedDishes >= 1) {
         player.cookedDishes--;
-        player.gold += 15;
-        logEl.textContent = "Sold a Dish for 15 Gold! 🪙";
+        const earned = getDishSellPrice();
+        player.gold += earned;
+        logEl.textContent = `Sold dish for ${earned} Gold (INT + CHA bonuses)! 🪙`;
         updateUI();
       }
     }
 
-    // Attack Button Action
     function triggerAttack() {
       if (!enemy.alive || player.hp <= 0) return;
-
-      // Check if player is close enough to hit the enemy
       const distanceX = Math.abs((player.x + player.size/2) - (enemy.x + enemy.size/2));
       const distanceY = Math.abs((player.y + player.size/2) - (enemy.y + enemy.size/2));
 
-      if (distanceX < 60 && distanceY < 60) {
-        enemy.hp -= 15;
+      if (distanceX < 55 && distanceY < 55) {
+        // Check Carry Weight Limit before harvesting
+        if (player.rawMeat >= getMaxBagWeight()) {
+          logEl.textContent = "Bag is FULL! Cook your meat or upgrade STR to carry more! 🎒";
+          return;
+        }
+
+        const dmg = getAttackDmg();
+        enemy.hp -= dmg;
+
         if (enemy.hp <= 0) {
           enemy.alive = false;
-          player.rawMeat++;
-          logEl.textContent = "Defeated Slime! Got 1x Raw Meat (🥩).";
+          // Wisdom check for double meat harvest
+          const isDouble = (Math.random() * 100) < getDoubleDropChance();
+          const gained = isDouble ? 2 : 1;
+          player.rawMeat = Math.min(getMaxBagWeight(), player.rawMeat + gained);
+
+          logEl.textContent = isDouble 
+            ? `👁️ WISDOM PROC! Slain Slime & harvested 2x Raw Meat! (🥩)` 
+            : `Defeated Slime! Harvested 1x Raw Meat (🥩).`;
+          
           updateUI();
-          setTimeout(respawnEnemy, 1500);
+          setTimeout(respawnEnemy, 1400);
         } else {
-          player.hp = Math.max(0, player.hp - enemy.atk);
-          logEl.textContent = `Attacked Slime! Took ${enemy.atk} DMG back.`;
-          if (player.hp === 0) logEl.textContent = "You fainted! Refresh to restart.";
+          // Dexterity Dodge Roll
+          const dodged = (Math.random() * 100) < getDodgeChance();
+          if (dodged) {
+            logEl.textContent = `Hit for ${dmg} DMG! ⚡ DODGED the Slime's counter-attack!`;
+          } else {
+            const taken = Math.max(1, enemy.atk - getDamageReduction());
+            player.hp = Math.max(0, player.hp - taken);
+            logEl.textContent = `Hit for ${dmg} DMG! Took ${taken} DMG (CON reduced).`;
+            if (player.hp === 0) logEl.textContent = "You fainted! Refresh page to restart.";
+          }
         }
         updateUI();
       } else {
-        logEl.textContent = "Too far away! Move closer to the slime to attack.";
+        logEl.textContent = "Too far away! Move closer to the slime.";
+      }
+    }
+
+    function openModal(id) { updateUI(); document.getElementById(id).style.display = "flex"; }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+
+    function buyUpgrade(stat) {
+      const cost = getUpgradeCost();
+      if (player.gold >= cost) {
+        player.gold -= cost;
+        player[stat] += 2;
+        if (stat === 'con') player.hp = getMaxHp(); // Full heal when upgrading CON
+        logEl.textContent = `Trained ${stat.toUpperCase()} +2! Check 📜 STATS for new bonuses.`;
+        updateUI();
+      } else {
+        logEl.textContent = `Not enough Gold! Need ${cost} 🪙.`;
       }
     }
 
     function update() {
       if (player.hp <= 0) return;
-
-      // Movement from Joystick or Keyboard
       let moveX = joystickMoveX;
       let moveY = joystickMoveY;
 
@@ -357,12 +532,12 @@
       if (keys["a"] || keys["arrowleft"]) moveX = -1;
       if (keys["d"] || keys["arrowright"]) moveX = 1;
 
+      const spd = getMoveSpeed();
       if (moveX !== 0 || moveY !== 0) {
-        player.x += moveX * player.speed;
-        player.y += moveY * player.speed;
+        player.x += moveX * spd;
+        player.y += moveY * spd;
       }
 
-      // Boundary limits
       player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
       player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
     }
@@ -379,7 +554,6 @@
         ctx.fillStyle = "#f38ba8";
         ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
 
-        // Enemy HP bar
         ctx.fillStyle = "#45475a";
         ctx.fillRect(enemy.x, enemy.y - 6, enemy.size, 4);
         ctx.fillStyle = "#a6e3a1";
