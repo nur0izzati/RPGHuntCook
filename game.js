@@ -2,20 +2,17 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const logEl = document.getElementById("log");
 
-// --- FUTURE IMAGE HOOKS (Uncomment when adding your own artwork) ---
-// const heroImg = new Image(); heroImg.src = "hero.png";
-// const slimeImg = new Image(); slimeImg.src = "slime.png";
+// Map Tracking ("town" or "hunt")
+let currentMap = "town";
 
 const DEFAULT_PLAYER = {
-  x: 100,
-  y: 150,
+  x: 270,
+  y: 130,
   size: 28,
   hp: 100,
   gold: 0,
   rawMeat: 0,
   cookedDishes: 0,
-  isDodging: false,
-  dodgeTimer: 0,
   str: 10,
   dex: 10,
   con: 10,
@@ -26,20 +23,57 @@ const DEFAULT_PLAYER = {
 
 let player = { ...DEFAULT_PLAYER };
 
-// Enemy with Telegraphed Attack State
 let enemy = {
   x: 450,
-  y: 150,
+  y: 130,
   size: 34,
   hp: 30,
   maxHp: 30,
   atk: 15,
   alive: true,
-  state: "idle",       // "idle" | "windup" | "cooldown"
+  state: "idle",       // "idle" | "windup"
   windupTimer: 0,
-  maxWindup: 55,       // ~0.9 seconds warning before strike!
+  maxWindup: 55,       // ~0.9 seconds warning before strike
   cooldownTimer: 0
 };
+
+// --- MAP SWITCHER ---
+function switchMap() {
+  if (currentMap === "town") {
+    currentMap = "hunt";
+    document.getElementById("map-toggle-btn").textContent = "🏠 Return to Town";
+    document.getElementById("map-toggle-btn").style.backgroundColor = "#f9e2af";
+    document.getElementById("mobile-controls").style.display = "flex";
+    
+    // Change action panel to show quick return / status
+    document.getElementById("action-panel").innerHTML = `
+      <div style="text-align:center; font-size:12px; color: #f38ba8; font-weight:bold; padding:4px;">
+        🌲 HUNTING GROUNDS: Approach slime & tap ATTACK!
+      </div>
+    `;
+    logEl.textContent = "Entered the Hunting Grounds! Watch out for aggressive slimes.";
+    player.x = 80; player.y = 130;
+  } else {
+    currentMap = "town";
+    document.getElementById("map-toggle-btn").textContent = "🌲 Go to Hunting Grounds";
+    document.getElementById("map-toggle-btn").style.backgroundColor = "#a6e3a1";
+    document.getElementById("mobile-controls").style.display = "none";
+
+    // Restore Town Kitchen Panel
+    document.getElementById("action-panel").innerHTML = `
+      <div id="town-controls" class="action-group">
+        <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
+        <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
+        <button id="sell-btn" onclick="sellDish()" disabled>Sell Dish</button>
+        <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
+        <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
+      </div>
+    `;
+    logEl.textContent = "Returned safely to Town. Cook, sell, and upgrade your gear!";
+    player.x = 270; player.y = 130;
+    updateUI();
+  }
+}
 
 // --- SAVE & LOAD SYSTEM ---
 function saveGame() {
@@ -56,7 +90,7 @@ function saveGame() {
     cha: player.cha
   };
   localStorage.setItem("RPGHuntCook_Save", JSON.stringify(saveData));
-  logEl.textContent = "💾 Game Saved! Your stats, gold, and items are safe.";
+  logEl.textContent = "💾 Game Saved successfully!";
 }
 
 function loadGame() {
@@ -64,7 +98,7 @@ function loadGame() {
   if (saved) {
     const parsed = JSON.parse(saved);
     player = { ...DEFAULT_PLAYER, ...parsed };
-    logEl.textContent = "📂 Save file loaded! Welcome back.";
+    logEl.textContent = "📂 Save file loaded!";
   }
 }
 
@@ -72,17 +106,18 @@ function resetGame() {
   if (confirm("Reset all progress and start a new game?")) {
     localStorage.removeItem("RPGHuntCook_Save");
     player = { ...DEFAULT_PLAYER };
+    if (currentMap === "hunt") switchMap();
     respawnEnemy();
     updateUI();
     logEl.textContent = "🔄 Started a brand new game!";
   }
 }
 
-// --- RPG STAT FORMULAS ---
+// --- RPG FORMULAS ---
 function getAttackDmg() { return player.str; }
 function getMaxBagWeight() { return Math.floor(player.str / 2); }
 function getMoveSpeed() { return 3 + (player.dex * 0.1); }
-function getDodgeChance() { return Math.min(65, (player.dex - 8) * 4); }
+function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); } // Auto-dodge chance!
 function getMaxHp() { return 50 + (player.con * 5); }
 function getDamageReduction() { return Math.floor((player.con - 10) / 2); }
 function getDishSellPrice() { return 10 + Math.floor(player.int * 0.8) + Math.floor(player.cha * 0.5); }
@@ -92,12 +127,11 @@ function getUpgradeCost() {
   return Math.max(5, 20 - discount);
 }
 
-// --- KEYBOARD & MULTI-TOUCH POINTER JOYSTICK ---
+// --- CONTROLS ---
 const keys = {};
 window.addEventListener("keydown", (e) => {
   keys[e.key.toLowerCase()] = true;
-  if (e.key === " ") triggerAttack();
-  if (e.key.toLowerCase() === "shift") triggerDodge();
+  if (e.key === " " && currentMap === "hunt") triggerAttack();
 });
 window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
 
@@ -120,13 +154,8 @@ base.addEventListener("pointermove", (e) => {
   updateJoystickPosition(e.clientX, e.clientY);
 });
 
-base.addEventListener("pointerup", (e) => {
-  if (e.pointerId === activePointerId) resetJoystick(e.pointerId);
-});
-
-base.addEventListener("pointercancel", (e) => {
-  if (e.pointerId === activePointerId) resetJoystick(e.pointerId);
-});
+base.addEventListener("pointerup", (e) => { if (e.pointerId === activePointerId) resetJoystick(e.pointerId); });
+base.addEventListener("pointercancel", (e) => { if (e.pointerId === activePointerId) resetJoystick(e.pointerId); });
 
 function updateJoystickPosition(clientX, clientY) {
   const rect = base.getBoundingClientRect();
@@ -134,13 +163,11 @@ function updateJoystickPosition(clientX, clientY) {
   const dy = clientY - (rect.top + rect.height / 2);
   const distance = Math.sqrt(dx * dx + dy * dy);
   const maxRadius = 35;
-
   const angle = Math.atan2(dy, dx);
   const pull = Math.min(distance, maxRadius);
 
   joystickMoveX = Math.cos(angle) * (pull / maxRadius);
   joystickMoveY = Math.sin(angle) * (pull / maxRadius);
-
   knob.style.transform = `translate(${Math.cos(angle) * pull}px, ${Math.sin(angle) * pull}px)`;
 }
 
@@ -154,7 +181,7 @@ function resetJoystick(pointerId) {
   knob.style.transform = `translate(0px, 0px)`;
 }
 
-// --- UI & CHARACTER SHEET UPDATES ---
+// --- UI UPDATES ---
 function updateUI() {
   const maxHp = getMaxHp();
   const maxBag = getMaxBagWeight();
@@ -175,28 +202,28 @@ function updateUI() {
   document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
   document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
 
-  document.getElementById("cook-btn").disabled = player.rawMeat < 1;
-
-  const healBtn = document.getElementById("heal-btn");
-  healBtn.disabled = player.cookedDishes < 1 || player.hp >= maxHp;
-
-  const sellBtn = document.getElementById("sell-btn");
-  sellBtn.disabled = player.cookedDishes < 1;
-  sellBtn.textContent = `Sell (+${getDishSellPrice()} 🪙)`;
+  if (currentMap === "town") {
+    document.getElementById("cook-btn").disabled = player.rawMeat < 1;
+    document.getElementById("heal-btn").disabled = player.cookedDishes < 1 || player.hp >= maxHp;
+    const sellBtn = document.getElementById("sell-btn");
+    sellBtn.disabled = player.cookedDishes < 1;
+    sellBtn.textContent = `Sell (+${getDishSellPrice()} 🪙)`;
+  }
 
   ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(stat => {
-    document.getElementById(`btn-${stat}`).textContent = `${cost} 🪙`;
+    const btn = document.getElementById(`btn-${stat}`);
+    if (btn) btn.textContent = `${cost} 🪙`;
   });
 
   document.getElementById("desc-str").innerHTML = `<strong>💪 Strength (${player.str}):</strong> Carry weight & melee power.<br><em>Effect: ${getAttackDmg()} DMG | Max Carry: ${maxBag} Meat</em>`;
-  document.getElementById("desc-dex").innerHTML = `<strong>⚡ Dexterity (${player.dex}):</strong> Speed & reflex.<br><em>Effect: Speed ${getMoveSpeed().toFixed(1)} | ${getDodgeChance()}% Passive Dodge</em>`;
+  document.getElementById("desc-dex").innerHTML = `<strong>⚡ Dexterity (${player.dex}):</strong> Speed & auto-dodge.<br><em>Effect: Speed ${getMoveSpeed().toFixed(1)} | ${getDodgeChance()}% Auto-Dodge Chance</em>`;
   document.getElementById("desc-con").innerHTML = `<strong>🛡️ Constitution (${player.con}):</strong> Health & defense.<br><em>Effect: ${maxHp} Max HP | -${getDamageReduction()} DMG Taken</em>`;
   document.getElementById("desc-int").innerHTML = `<strong>🧠 Intelligence (${player.int}):</strong> Logic & recipe mastery.<br><em>Effect: Boosts dish gold value</em>`;
   document.getElementById("desc-wis").innerHTML = `<strong>👁️ Wisdom (${player.wis}):</strong> Perception & instinct.<br><em>Effect: ${getDoubleDropChance()}% chance for 2x meat</em>`;
   document.getElementById("desc-cha").innerHTML = `<strong>✨ Charisma (${player.cha}):</strong> Social influence.<br><em>Effect: Shop upgrades cost ${cost} 🪙</em>`;
 }
 
-// --- GAMEPLAY ACTIONS ---
+// --- ACTIONS ---
 function respawnEnemy() {
   enemy.hp = enemy.maxHp;
   enemy.alive = true;
@@ -211,7 +238,7 @@ function cookDish() {
   if (player.rawMeat >= 1) {
     player.rawMeat--;
     player.cookedDishes++;
-    logEl.textContent = "Cooked 1 Raw Meat into a hearty dish! 🍖";
+    logEl.textContent = "Kitchen: Cooked 1 Raw Meat into a dish! 🍖";
     updateUI();
   }
 }
@@ -222,7 +249,7 @@ function healPlayer() {
     player.cookedDishes--;
     const healAmount = Math.floor(maxHp * 0.5);
     player.hp = Math.min(maxHp, player.hp + healAmount);
-    logEl.textContent = `🍲 Ate a hot stew and restored ${healAmount} HP!`;
+    logEl.textContent = `🍲 Ate a hot stew in town and restored ${healAmount} HP!`;
     updateUI();
   }
 }
@@ -232,17 +259,9 @@ function sellDish() {
     player.cookedDishes--;
     const earned = getDishSellPrice();
     player.gold += earned;
-    logEl.textContent = `Sold dish for ${earned} Gold! 🪙`;
+    logEl.textContent = `Shop: Sold dish to villagers for ${earned} Gold! 🪙`;
     updateUI();
   }
-}
-
-function triggerDodge() {
-  if (player.dodgeTimer > 0 || player.hp <= 0) return;
-  player.isDodging = true;
-  player.dodgeTimer = 45;
-  logEl.textContent = "🏃‍♂️ DODGE ROLL! Invulnerable for a split second!";
-  setTimeout(() => { player.isDodging = false; }, 450);
 }
 
 function getDistanceToEnemy() {
@@ -252,11 +271,11 @@ function getDistanceToEnemy() {
 }
 
 function triggerAttack() {
-  if (!enemy.alive || player.hp <= 0) return;
+  if (currentMap !== "hunt" || !enemy.alive || player.hp <= 0) return;
 
   if (getDistanceToEnemy() < 75) {
     if (player.rawMeat >= getMaxBagWeight()) {
-      logEl.textContent = "Bag is FULL! Cook your meat or upgrade STR! 🎒";
+      logEl.textContent = "Bag is FULL! Return to Town to cook your meat! 🎒🏠";
       return;
     }
 
@@ -277,11 +296,10 @@ function triggerAttack() {
       updateUI();
       setTimeout(respawnEnemy, 1500);
     } else {
-      // Trigger the Slime's telegraphed counter-attack if it isn't already winding up!
       if (enemy.state === "idle") {
         enemy.state = "windup";
         enemy.windupTimer = enemy.maxWindup;
-        logEl.textContent = `Hit Slime for ${dmg} DMG! ⚠️ WATCH OUT—Slime is preparing to strike!`;
+        logEl.textContent = `Hit Slime for ${dmg} DMG! ⚠️ Slime is preparing to counter-attack!`;
       } else {
         logEl.textContent = `Hit Slime for ${dmg} DMG!`;
       }
@@ -301,19 +319,17 @@ function buyUpgrade(stat) {
     player.gold -= cost;
     player[stat] += 2;
     if (stat === 'con') player.hp = getMaxHp();
-    logEl.textContent = `Trained ${stat.toUpperCase()} +2! Check 📜 STATS.`;
+    logEl.textContent = `Trained ${stat.toUpperCase()} +2 in Town! Check 📜 STATS.`;
     updateUI();
   } else {
     logEl.textContent = `Not enough Gold! Need ${cost} 🪙.`;
   }
 }
 
-// --- MAIN UPDATE LOOP ---
+// --- MAIN LOOP ---
 function update() {
   if (player.hp <= 0) return;
-  if (player.dodgeTimer > 0) player.dodgeTimer--;
 
-  // 1. Player Movement
   let moveX = joystickMoveX;
   let moveY = joystickMoveY;
 
@@ -322,7 +338,7 @@ function update() {
   if (keys["a"] || keys["arrowleft"]) moveX = -1;
   if (keys["d"] || keys["arrowright"]) moveX = 1;
 
-  const spd = getMoveSpeed() * (player.isDodging ? 1.8 : 1.0);
+  const spd = getMoveSpeed();
   if (moveX !== 0 || moveY !== 0) {
     player.x += moveX * spd;
     player.y += moveY * spd;
@@ -331,107 +347,112 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(20, Math.min(canvas.height - player.size, player.y));
 
-  // 2. Enemy AI & Telegraphed Attack System
-  if (enemy.alive) {
+  // Enemy AI in Hunting Map
+  if (currentMap === "hunt" && enemy.alive) {
     const dist = getDistanceToEnemy();
 
     if (enemy.state === "idle") {
-      // Automatically start attack windup if player gets very close
       if (dist < 60 && enemy.cooldownTimer === 0) {
         enemy.state = "windup";
         enemy.windupTimer = enemy.maxWindup;
-        logEl.textContent = "⚠️ Slime is charging an attack! Tap 🏃‍♂️ DODGE or run back!";
+        logEl.textContent = "⚠️ Slime is charging! Your DEX will attempt to auto-dodge!";
       }
       if (enemy.cooldownTimer > 0) enemy.cooldownTimer--;
     } 
     else if (enemy.state === "windup") {
       enemy.windupTimer--;
 
-      // When timer hits 0, the Slime strikes!
       if (enemy.windupTimer <= 0) {
         enemy.state = "idle";
-        enemy.cooldownTimer = 60; // 1 second rest before next attack
+        enemy.cooldownTimer = 60;
 
-        // Check if player is still in strike range (75px)
         if (dist < 75) {
-          if (player.isDodging) {
-            logEl.textContent = "⚡ PERFECT DODGE! You rolled right through the Slime's attack!";
-          } else if ((Math.random() * 100) < getDodgeChance()) {
-            logEl.textContent = "⚡ AGILITY DODGE! Your high DEX evaded the Slime's strike!";
+          // AUTO-DODGE CHECK VIA DEXTERITY
+          const autoDodged = (Math.random() * 100) < getDodgeChance();
+
+          if (autoDodged) {
+            logEl.textContent = `⚡ AUTO-DODGE! Your DEX (${player.dex}) effortlessly stepped aside from the Slime's attack!`;
           } else {
             const taken = Math.max(1, enemy.atk - getDamageReduction());
             player.hp = Math.max(0, player.hp - taken);
-            logEl.textContent = `💥 Slime slammed you for ${taken} DMG!`;
+            logEl.textContent = `💥 Slime hit you for ${taken} DMG! (Upgrade DEX for better auto-dodge!)`;
             if (player.hp === 0) {
-              logEl.textContent = "💀 You fainted! Tap 🔄 NEW GAME or refresh to restart.";
+              logEl.textContent = "💀 You fainted! Return to Town or reset game.";
             }
           }
           updateUI();
         } else {
-          logEl.textContent = "💨 Slime swung and missed because you backed away!";
+          logEl.textContent = "💨 Slime swung and missed you!";
         }
       }
     }
   }
 }
 
-// --- MAIN DRAW LOOP ---
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw Danger Range Ring around Slime when winding up an attack
-  if (enemy.alive && enemy.state === "windup") {
-    ctx.beginPath();
-    ctx.arc(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, 75, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(249, 226, 175, 0.12)";
-    ctx.fill();
-    ctx.strokeStyle = "#f9e2af";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  }
+  if (currentMap === "town") {
+    // Draw Town Background Visuals (Simple safe zone indicators)
+    ctx.fillStyle = "#313244";
+    ctx.fillRect(50, 50, 140, 100);
+    ctx.fillStyle = "#f9e2af";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🏠 TOWN KITCHEN & SHOP", 120, 105);
 
-  // Draw Player
-  ctx.fillStyle = player.isDodging ? "rgba(137, 180, 250, 0.45)" : "#89b4fa";
-  ctx.fillRect(player.x, player.y, player.size, player.size);
-
-  // Draw Player HP Bar directly above head
-  const maxHp = getMaxHp();
-  const hpRatio = player.hp / maxHp;
-  ctx.fillStyle = "#45475a";
-  ctx.fillRect(player.x - 4, player.y - 8, player.size + 8, 5);
-  ctx.fillStyle = hpRatio <= 0.35 ? "#f38ba8" : "#a6e3a1";
-  ctx.fillRect(player.x - 4, player.y - 8, (player.size + 8) * hpRatio, 5);
-
-  // Draw Enemy
-  if (enemy.alive) {
-    // Shake slightly & flash bright yellow during attack windup!
-    let shakeX = 0;
+    // Draw Player in Town
+    ctx.fillStyle = "#89b4fa";
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+  } else {
+    // Draw Hunting Grounds
     if (enemy.state === "windup") {
-      shakeX = (Math.random() - 0.5) * 6;
-      ctx.fillStyle = "#f9e2af"; // Bright yellow warning color
-    } else {
-      ctx.fillStyle = "#f38ba8"; // Normal red slime color
+      ctx.beginPath();
+      ctx.arc(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, 75, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(249, 226, 175, 0.1)";
+      ctx.fill();
     }
 
-    ctx.fillRect(enemy.x + shakeX, enemy.y, enemy.size, enemy.size);
+    // Draw Player
+    ctx.fillStyle = "#89b4fa";
+    ctx.fillRect(player.x, player.y, player.size, player.size);
 
-    // Enemy HP bar
+    // Player HP Bar
+    const maxHp = getMaxHp();
+    const hpRatio = player.hp / maxHp;
     ctx.fillStyle = "#45475a";
-    ctx.fillRect(enemy.x, enemy.y - 8, enemy.size, 5);
-    ctx.fillStyle = "#fab387";
-    ctx.fillRect(enemy.x, enemy.y - 8, enemy.size * (enemy.hp / enemy.maxHp), 5);
+    ctx.fillRect(player.x - 4, player.y - 8, player.size + 8, 5);
+    ctx.fillStyle = hpRatio <= 0.35 ? "#f38ba8" : "#a6e3a1";
+    ctx.fillRect(player.x - 4, player.y - 8, (player.size + 8) * hpRatio, 5);
 
-    // Draw ⚠️ Warning Text & Countdown Bar above Slime when attacking!
-    if (enemy.state === "windup") {
-      ctx.fillStyle = "#f9e2af";
-      ctx.font = "bold 13px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("⚠️ !", enemy.x + enemy.size / 2, enemy.y - 22);
+    // Draw Enemy
+    if (enemy.alive) {
+      let shakeX = 0;
+      if (enemy.state === "windup") {
+        shakeX = (Math.random() - 0.5) * 6;
+        ctx.fillStyle = "#f9e2af";
+      } else {
+        ctx.fillStyle = "#f38ba8";
+      }
 
-      // Shrinking attack timer bar
-      const chargeRatio = enemy.windupTimer / enemy.maxWindup;
-      ctx.fillStyle = "#f38ba8";
-      ctx.fillRect(enemy.x, enemy.y - 16, enemy.size * chargeRatio, 4);
+      ctx.fillRect(enemy.x + shakeX, enemy.y, enemy.size, enemy.size);
+
+      // Enemy HP bar
+      ctx.fillStyle = "#45475a";
+      ctx.fillRect(enemy.x, enemy.y - 8, enemy.size, 5);
+      ctx.fillStyle = "#fab387";
+      ctx.fillRect(enemy.x, enemy.y - 8, enemy.size * (enemy.hp / enemy.maxHp), 5);
+
+      if (enemy.state === "windup") {
+        ctx.fillStyle = "#f9e2af";
+        ctx.font = "bold 13px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("⚠️ !", enemy.x + enemy.size / 2, enemy.y - 22);
+
+        const chargeRatio = enemy.windupTimer / enemy.maxWindup;
+        ctx.fillStyle = "#f38ba8";
+        ctx.fillRect(enemy.x, enemy.y - 16, enemy.size * chargeRatio, 4);
+      }
     }
   }
 }
@@ -442,8 +463,10 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Initialize
+// Hide mobile controls initially since game starts in Town
+document.getElementById("mobile-controls").style.display = "none";
+
 loadGame();
 updateUI();
 gameLoop();
-    
+      
