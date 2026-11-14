@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Orders, Monsters & Meat-Free Recipes</title>
+  <title>RPGHuntCook - Town Explorer, Dating & Gacha</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- PROMINENT ON-SCREEN ALERT BANNER -->
+  <div id="alert-banner">Welcome to RPGHuntCook!</div>
 
   <!-- TOP RESOURCE & HP BAR -->
   <div id="ui-bar">
@@ -15,12 +18,12 @@
     <span id="stat-hp">HP: 100/100</span>
   </div>
 
-  <!-- INGREDIENTS BAR -->
+  <!-- INGREDIENTS BAR (Max 99 each) -->
   <div id="inv-bar">
-    <span id="inv-meat">🥩 Meat: 0</span>
-    <span id="inv-prime">🍖 Prime: 0</span>
-    <span id="inv-herb">🌿 Herb: 0</span>
-    <span id="inv-shroom">🍄 Shroom: 0</span>
+    <span id="inv-meat">🥩: 0/99</span>
+    <span id="inv-prime">🍖: 0/99</span>
+    <span id="inv-herb">🌿: 0/99</span>
+    <span id="inv-shroom">🍄: 0/99</span>
   </div>
 
   <!-- 6-STAT RPG ATTRIBUTES BAR -->
@@ -41,12 +44,13 @@
   <!-- GAME SCREEN -->
   <canvas id="gameCanvas" width="600" height="280"></canvas>
 
-  <!-- ACTION PANEL (TOWN CONTROLS) -->
+  <!-- ACTION PANEL -->
   <div id="action-panel">
     <div id="town-controls" class="action-group">
       <button id="kitchen-btn" onclick="openModal('kitchen-modal')">🍳 KITCHEN</button>
-      <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #fab387;">🗣️ CUSTOMERS</button>
-      <button id="heal-btn" onclick="eatBestDish()" disabled>🍲 Eat Dish</button>
+      <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #fab387;">🗣️ NPCS</button>
+      <button id="gacha-btn" onclick="openModal('gacha-modal')" style="background-color: #f38ba8;">🎁 GACHA</button>
+      <button id="heal-btn" onclick="eatBestDish()" disabled>🍲 Eat</button>
       <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
       <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
     </div>
@@ -58,69 +62,69 @@
     <button id="reset-btn" onclick="resetGame()">🔄 NEW GAME</button>
   </div>
 
-  <!-- MOBILE VIRTUAL CONTROLS -->
+  <!-- MOBILE VIRTUAL CONTROLS (Always active now for Town & Hunt exploration!) -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div class="button-group">
-      <button class="action-circle-btn" id="grab-btn" onclick="grabNearbyItem()">🌿 GRAB</button>
-      <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ ATTACK</button>
+      <button class="action-circle-btn" id="action-btn" onclick="triggerMainAction()">⭐ ACT</button>
+      <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ FIGHT</button>
     </div>
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Welcome to Town! Check 🗣️ CUSTOMERS for special dish orders, or visit the Kitchen for meat-free recipes!</div>
+  <div id="log">Explore the Town with the joystick! Walk up to buildings or NPCs and press ACT.</div>
 
-  <!-- TOWN NPC CUSTOMER ORDERS MODAL -->
-  <div id="npc-modal" class="modal">
-    <div class="modal-content modal-orange">
-      <h3 class="modal-title-orange">🗣️ Town Customer Orders</h3>
+  <!-- GACHA BANNER MODAL -->
+  <div id="gacha-modal" class="modal">
+    <div class="modal-content modal-pink">
+      <h3 class="modal-title-pink">🎁 Mystic Recipe & Stat Gacha</h3>
       <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
-        Villagers are waiting for specific dishes! Fulfill orders for bonus gold & reputation.
+        Spend 50 Gold to pull random rare ingredients, bonus gold, or permanent stat boosts!
       </p>
-
-      <div id="customer-orders-container">
-        <!-- Dynamically filled by JS -->
+      <div id="gacha-result-box" style="background:#181825; padding:12px; border-radius:6px; text-align:center; margin:10px 0; min-height:40px; font-size:12px; color:#f9e2af;">
+        Tap pull below to try your luck!
       </div>
-
-      <button class="close-btn" onclick="closeModal('npc-modal')">Close Customers</button>
+      <button onclick="pullGacha()" style="background-color: #f38ba8; color:#11111b; width:100%; padding:10px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">Pull Gacha (50 🪙)</button>
+      <button class="close-btn" onclick="closeModal('gacha-modal')">Close Gacha</button>
     </div>
   </div>
 
-  <!-- KITCHEN & RECIPE BOOK MODAL -->
+  <!-- NPC DATING / TALK MODAL -->
+  <div id="npc-modal" class="modal">
+    <div class="modal-content modal-orange">
+      <h3 class="modal-title-orange">🗣️ Town Square & Dating</h3>
+      <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
+        Talk daily, learn their personality, and gift dishes to increase hearts!
+      </p>
+      <div id="npc-list-container"></div>
+      <button class="close-btn" onclick="closeModal('npc-modal')">Close NPCs</button>
+    </div>
+  </div>
+
+  <!-- KITCHEN MODAL -->
   <div id="kitchen-modal" class="modal">
     <div class="modal-content modal-blue">
       <h3 class="modal-title-blue">🍳 Town Kitchen & Recipe Book</h3>
-      <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
-        Includes meat recipes, monster feasts, and 100% vegetarian meat-free dishes!
-      </p>
-
-      <!-- Meat Recipes -->
       <div class="shop-item">
-        <span><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat | Value: <span id="val-skewer">15</span> 🪙</small></span>
+        <span><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat</small></span>
         <button onclick="cookRecipe('skewer')" id="cook-skewer">Cook</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 Meat + 1 🌿 Herb | Value: <span id="val-steak">30</span> 🪙</small></span>
+        <span><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 Meat + 1 🌿 Herb</small></span>
         <button onclick="cookRecipe('steak')" id="cook-steak">Cook</button>
       </div>
-
       <div class="shop-item">
-        <span><strong>🍖 Prime Beast Feast</strong><br><small>1 🍖 Prime Meat + 1 🍄 Shroom | Value: <span id="val-feast">70</span> 🪙</small></span>
+        <span><strong>🍖 Prime Beast Feast</strong><br><small>1 🍖 Prime Meat + 1 🍄 Shroom</small></span>
         <button onclick="cookRecipe('feast')" id="cook-feast">Cook</button>
       </div>
-
-      <!-- Meat-Free Recipes -->
       <div class="shop-item" style="border-left: 3px solid #a6e3a1;">
-        <span><strong>🌿 Forest Herbal Salad</strong><br><small>2 🌿 Herb + 1 🍄 Shroom (No Meat!) | Value: <span id="val-salad">45</span> 🪙</small></span>
+        <span><strong>🌿 Forest Herbal Salad (Meat-Free)</strong><br><small>2 🌿 Herb + 1 🍄 Shroom</small></span>
         <button onclick="cookRecipe('salad')" id="cook-salad">Cook</button>
       </div>
-
       <div class="shop-item" style="border-left: 3px solid #a6e3a1;">
-        <span><strong>🍵 Mystical Mushroom Tonic</strong><br><small>2 🍄 Shroom + 1 🌿 Herb (No Meat!) | Value: <span id="val-tonic">50</span> 🪙</small></span>
+        <span><strong>🍵 Mushroom Tonic (Meat-Free)</strong><br><small>2 🍄 Shroom + 1 🌿 Herb</small></span>
         <button onclick="cookRecipe('tonic')" id="cook-tonic">Cook</button>
       </div>
-
       <button class="close-btn" onclick="closeModal('kitchen-modal')">Close Kitchen</button>
     </div>
   </div>
@@ -129,30 +133,12 @@
   <div id="shop-modal" class="modal">
     <div class="modal-content">
       <h3 class="modal-title-gold">🛒 Attribute Training Shop</h3>
-      <div class="shop-item">
-        <span><strong>💪 Strength (+2 STR)</strong><br><small>Melee DMG & Bag Slot Capacity</small></span>
-        <button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Speed & Auto-Dodge Chance</small></span>
-        <button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>🛡️ Constitution (+2 CON)</strong><br><small>Max HP & Defense</small></span>
-        <button onclick="buyUpgrade('con')" id="btn-con">20 🪙</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>🧠 Intelligence (+2 INT)</strong><br><small>Dish Gold Value</small></span>
-        <button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>👁️ Wisdom (+2 WIS)</strong><br><small>Double-Harvest Chance</small></span>
-        <button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>✨ Charisma (+2 CHA)</strong><br><small>Lower Shop Prices & Customer Tips</small></span>
-        <button onclick="buyUpgrade('cha')" id="btn-cha">20 🪙</button>
-      </div>
+      <div class="shop-item"><span><strong>💪 Strength (+2 STR)</strong></span><button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button></div>
+      <div class="shop-item"><span><strong>⚡ Dexterity (+2 DEX)</strong></span><button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button></div>
+      <div class="shop-item"><span><strong>🛡️ Constitution (+2 CON)</strong></span><button onclick="buyUpgrade('con')" id="btn-con">20 🪙</button></div>
+      <div class="shop-item"><span><strong>🧠 Intelligence (+2 INT)</strong></span><button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button></div>
+      <div class="shop-item"><span><strong>👁️ Wisdom (+2 WIS)</strong></span><button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button></div>
+      <div class="shop-item"><span><strong>✨ Charisma (+2 CHA)</strong></span><button onclick="buyUpgrade('cha')" id="btn-cha">20 🪙</button></div>
       <button class="close-btn" onclick="closeModal('shop-modal')">Close Shop</button>
     </div>
   </div>
