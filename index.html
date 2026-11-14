@@ -28,15 +28,14 @@
 
   <!-- MAP / ZONE SWITCHER BAR -->
   <div id="map-bar">
-    <button id="map-toggle-btn" onclick="switchMap()">🌲 Go to Hunting Grounds</button>
+    <button id="map-toggle-btn" onclick="switchMap()">🌲 Travel to Hunting Grounds</button>
   </div>
 
   <!-- GAME SCREEN -->
   <canvas id="gameCanvas" width="600" height="300"></canvas>
 
-  <!-- DYNAMIC ACTION PANEL (CHANGES BASED ON TOWN OR HUNTING MAP) -->
+  <!-- ACTION PANEL (TOWN CONTROLS) -->
   <div id="action-panel">
-    <!-- TOWN CONTROLS (Default) -->
     <div id="town-controls" class="action-group">
       <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
       <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
@@ -52,7 +51,7 @@
     <button id="reset-btn" onclick="resetGame()">🔄 NEW GAME</button>
   </div>
 
-  <!-- MOBILE VIRTUAL CONTROLS (ONLY ACTIVE IN HUNTING GROUNDS) -->
+  <!-- MOBILE VIRTUAL CONTROLS (Hidden in Town, Shown in Hunt) -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div class="button-group">
@@ -61,7 +60,7 @@
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Welcome to Town! Visit the Shop or Kitchen, then switch to the Hunting Grounds to find monsters.</div>
+  <div id="log">Welcome to Town! Walk around your village or click the green button above to go hunt.</div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
