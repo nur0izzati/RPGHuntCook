@@ -72,7 +72,7 @@ function advanceTime() {
 
 // --- CHEAT CODE & REWARD CODE REDEMPTION SYSTEM ---
 function openCheatPrompt() {
-  let code = prompt("Enter Reward / Cheat Code:\n\nAvailable Cheats:\n- 'INFINITYGOLD' (99,999 Gold)\n- 'FREEGACHA' (10 Free Pull Items)\n- 'MAXSTATS' (All Stats +20)", "");
+  let code = prompt("Enter Reward / Cheat Code:\n\nAvailable Cheats:\n- 'INFINITYGOLD' (99,999 Gold)\n- 'FREEGACHA' (5 Free Items)\n- 'MAXSTATS' (All Stats +20)", "");
   if (!code) return;
   code = code.trim().toUpperCase();
 
@@ -182,8 +182,9 @@ function getMoveSpeed() { return 3 + (player.dex * 0.1); }
 function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); }
 function getUpgradeCost() { return Math.max(5, 20 - Math.floor((player.cha - 10) * 1.5)); }
 
-// Touch Joystick Setup
+// Touch Joystick Setup & Footstep Sound Trigger
 let activePointerId = null, joystickMoveX = 0, joystickMoveY = 0;
+let footstepTimer = 0;
 const base = document.getElementById("joystick-base");
 const knob = document.getElementById("joystick-knob");
 
@@ -212,16 +213,44 @@ function resetJoystick(pointerId) {
   if (knob) knob.style.transform = `translate(0px, 0px)`;
 }
 
+// --- MAIN ACTION BUTTON (PROXIMITY CHECK FOR BUILDINGS & NPCS) ---
 function triggerMainAction() {
+  if (typeof playSound === 'function') playSound('npcTalk');
+
   if (currentMap === "hunt") {
     if (typeof collectWildItems === 'function') collectWildItems();
   } else {
+    // Check proximity to Town Buildings (Inn, Guild, Shop)
+    // Inn building box: x:30->140, y:40->120
+    if (player.x >= 20 && player.x <= 150 && player.y >= 30 && player.y <= 130) {
+      sleepAtInn();
+      return;
+    }
+    // Guild building box: x:160->270, y:40->120
+    if (player.x >= 150 && player.x <= 280 && player.y >= 30 && player.y <= 130) {
+      openModal('guild-modal');
+      showAlert("Entered Adventurer's Guild!", "success");
+      return;
+    }
+    // Shop building box: x:290->400, y:40->120
+    if (player.x >= 280 && player.x <= 410 && player.y >= 30 && player.y <= 130) {
+      openModal('shop-modal');
+      showAlert("Entered Village Training Shop!", "success");
+      return;
+    }
+
+    // Check proximity to NPCs
     if (typeof npcs !== 'undefined') {
+      let foundNpc = false;
       npcs.forEach(n => {
         if (Math.sqrt(Math.pow((player.x+14)-(n.x+14), 2) + Math.pow((player.y+14)-(n.y+14), 2)) < 55) {
           if (typeof openDialogue === 'function') openDialogue(n.id);
+          foundNpc = true;
         }
       });
+      if (!foundNpc) {
+        showAlert("Walk closer to a building (Inn, Guild, Shop) or NPC and press Act!", "info");
+      }
     }
   }
 }
@@ -236,12 +265,12 @@ function cookRecipe(type) {
 }
 
 function saveGame() {
-  localStorage.setItem("RPGHuntCook_Save_v9", JSON.stringify({ player, npcs: typeof npcs !== 'undefined' ? npcs : [], dayCount, timeOfDay, activeQuests }));
+  localStorage.setItem("RPGHuntCook_Save_v10", JSON.stringify({ player, npcs: typeof npcs !== 'undefined' ? npcs : [], dayCount, timeOfDay, activeQuests }));
   showAlert("💾 Game Saved!", "success");
 }
 
 function loadGame() {
-  const saved = localStorage.getItem("RPGHuntCook_Save_v9");
+  const saved = localStorage.getItem("RPGHuntCook_Save_v10");
   if (saved) {
     const data = JSON.parse(saved);
     player = { ...DEFAULT_PLAYER, ...data.player };
@@ -255,7 +284,7 @@ function loadGame() {
 
 function resetGame() {
   if (confirm("Reset all progress?")) {
-    localStorage.removeItem("RPGHuntCook_Save_v9");
+    localStorage.removeItem("RPGHuntCook_Save_v10");
     player = { ...DEFAULT_PLAYER };
     dayCount = 1; timeOfDay = "Morning";
     if (currentMap === "hunt") switchMap();
@@ -339,7 +368,17 @@ function buyUpgrade(stat) {
 function update() {
   if (player.hp <= 0) return;
   let moveX = joystickMoveX, moveY = joystickMoveY;
-  if (moveX !== 0 || moveY !== 0) { player.x += moveX * getMoveSpeed(); player.y += moveY * getMoveSpeed(); }
+  if (moveX !== 0 || moveY !== 0) {
+    player.x += moveX * getMoveSpeed();
+    player.y += moveY * getMoveSpeed();
+    
+    // Play footstep sound
+    footstepTimer++;
+    if (footstepTimer > 20) {
+      if (typeof playSound === 'function') playSound('walk');
+      footstepTimer = 0;
+    }
+  }
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(20, Math.min(canvas.height - player.size, player.y));
 
@@ -364,4 +403,3 @@ function gameLoop() {
 }
 
 loadGame(); updateUI(); gameLoop();
-      
