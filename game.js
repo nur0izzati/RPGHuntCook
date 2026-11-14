@@ -61,10 +61,10 @@ function advanceTime() {
   if (timeOfDay === "Morning") timeOfDay = "Afternoon";
   else if (timeOfDay === "Afternoon") timeOfDay = "Evening";
   else if (timeOfDay === "Evening") timeOfDay = "Night";
-  else { timeOfDay = "Morning"; dayCount++; npcs.forEach(n => { n.talkedToday = false; }); }
+  else { timeOfDay = "Morning"; dayCount++; if (typeof npcs !== 'undefined') npcs.forEach(n => { n.talkedToday = false; }); }
 }
 
-// --- CHEAT CODE FOR INFINITY GOLD ---
+// --- CHEAT CODE ---
 function activateCheatCode() {
   player.gold = 99999;
   showAlert("⚡ CHEAT ACTIVATED: Infinity Gold Unlocked (99,999 🪙)!", "success");
@@ -94,7 +94,7 @@ function selectForestDifficulty(type) {
   }
 
   player.x = 60; player.y = 120;
-  spawnWildItems();
+  if (typeof spawnWildItems === 'function') spawnWildItems();
 }
 
 function switchMap() {
@@ -110,7 +110,7 @@ function switchMap() {
   }
 }
 
-// --- SELLING & EATING ITEMS IN INVENTORY ---
+// --- SELLING & EATING ---
 function sellItem(itemKey, price) {
   if (player[itemKey] > 0) {
     player[itemKey]--;
@@ -135,7 +135,7 @@ function eatFood(foodKey, restorePct) {
   }
 }
 
-// --- WEIGHTED GACHA ---
+// --- GACHA ---
 function pullGacha() {
   const cost = 50;
   if (player.gold < cost) { showAlert("Need 50 🪙", "danger"); return; }
@@ -152,20 +152,22 @@ function pullGacha() {
   updateUI();
 }
 
-function getAttackDmg() { return player.str + (npcs.filter(n => n.inParty).length * 5); }
+function getAttackDmg() { return player.str + (typeof npcs !== 'undefined' ? npcs.filter(n => n.inParty).length * 5 : 0); }
 function getMaxHp() { return 50 + (player.con * 5); }
 function getMoveSpeed() { return 3 + (player.dex * 0.1); }
 function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); }
 function getUpgradeCost() { return Math.max(5, 20 - Math.floor((player.cha - 10) * 1.5)); }
 
-// Touch Joystick
+// Touch Joystick Setup
 let activePointerId = null, joystickMoveX = 0, joystickMoveY = 0;
 const base = document.getElementById("joystick-base");
 const knob = document.getElementById("joystick-knob");
 
-base.addEventListener("pointerdown", (e) => { e.preventDefault(); activePointerId = e.pointerId; base.setPointerCapture(e.pointerId); updateJoystickPosition(e.clientX, e.clientY); });
-base.addEventListener("pointermove", (e) => { if (e.pointerId !== activePointerId) return; e.preventDefault(); updateJoystickPosition(e.clientX, e.clientY); });
-base.addEventListener("pointerup", (e) => { if (e.pointerId === activePointerId) resetJoystick(e.pointerId); });
+if (base) {
+  base.addEventListener("pointerdown", (e) => { e.preventDefault(); activePointerId = e.pointerId; base.setPointerCapture(e.pointerId); updateJoystickPosition(e.clientX, e.clientY); });
+  base.addEventListener("pointermove", (e) => { if (e.pointerId !== activePointerId) return; e.preventDefault(); updateJoystickPosition(e.clientX, e.clientY); });
+  base.addEventListener("pointerup", (e) => { if (e.pointerId === activePointerId) resetJoystick(e.pointerId); });
+}
 
 function updateJoystickPosition(clientX, clientY) {
   const rect = base.getBoundingClientRect();
@@ -181,14 +183,23 @@ function updateJoystickPosition(clientX, clientY) {
 }
 
 function resetJoystick(pointerId) {
-  if (pointerId !== undefined && base.hasPointerCapture(pointerId)) base.releasePointerCapture(pointerId);
+  if (pointerId !== undefined && base && base.hasPointerCapture(pointerId)) base.releasePointerCapture(pointerId);
   activePointerId = null; joystickMoveX = 0; joystickMoveY = 0;
-  knob.style.transform = `translate(0px, 0px)`;
+  if (knob) knob.style.transform = `translate(0px, 0px)`;
 }
 
 function triggerMainAction() {
-  if (currentMap === "hunt") collectWildItems();
-  else npcs.forEach(n => { if (Math.sqrt(Math.pow((player.x+14)-(n.x+14), 2) + Math.pow((player.y+14)-(n.y+14), 2)) < 55) openDialogue(n.id); });
+  if (currentMap === "hunt") {
+    if (typeof collectWildItems === 'function') collectWildItems();
+  } else {
+    if (typeof npcs !== 'undefined') {
+      npcs.forEach(n => {
+        if (Math.sqrt(Math.pow((player.x+14)-(n.x+14), 2) + Math.pow((player.y+14)-(n.y+14), 2)) < 55) {
+          if (typeof openDialogue === 'function') openDialogue(n.id);
+        }
+      });
+    }
+  }
 }
 
 function cookRecipe(type) {
@@ -201,7 +212,7 @@ function cookRecipe(type) {
 }
 
 function saveGame() {
-  localStorage.setItem("RPGHuntCook_Save_v8", JSON.stringify({ player, npcs, dayCount, timeOfDay, activeQuests }));
+  localStorage.setItem("RPGHuntCook_Save_v8", JSON.stringify({ player, npcs: typeof npcs !== 'undefined' ? npcs : [], dayCount, timeOfDay, activeQuests }));
   showAlert("💾 Game Saved!", "success");
 }
 
@@ -210,7 +221,7 @@ function loadGame() {
   if (saved) {
     const data = JSON.parse(saved);
     player = { ...DEFAULT_PLAYER, ...data.player };
-    if (data.npcs) npcs = data.npcs;
+    if (data.npcs && typeof npcs !== 'undefined') npcs = data.npcs;
     if (data.dayCount) dayCount = data.dayCount;
     if (data.timeOfDay) timeOfDay = data.timeOfDay;
     if (data.activeQuests) activeQuests = data.activeQuests;
@@ -240,22 +251,31 @@ function updateUI() {
   document.getElementById("inv-shroom").textContent = `🍄: ${player.mushrooms}/99`;
 
   // Kitchen ingredient counts
-  document.getElementById("recipe-skewer").innerHTML = `<strong>🍖 Skewer</strong><br><small>1 🥩 (Have: ${player.rawMeat})</small> <button onclick="cookRecipe('skewer')">Cook</button>`;
-  document.getElementById("recipe-steak").innerHTML = `<strong>🥗 Steak</strong><br><small>1 🥩+1 🌿 (Meat:${player.rawMeat}, Herb:${player.herbs})</small> <button onclick="cookRecipe('steak')">Cook</button>`;
-  document.getElementById("recipe-salad").innerHTML = `<strong>🌿 Salad</strong><br><small>2 🌿+1 🍄 (Herb:${player.herbs}, Shroom:${player.mushrooms})</small> <button onclick="cookRecipe('salad')">Cook</button>`;
+  const skewerEl = document.getElementById("recipe-skewer");
+  if (skewerEl) skewerEl.innerHTML = `<strong>🍖 Skewer</strong><br><small>1 🥩 (Have: ${player.rawMeat})</small> <button onclick="cookRecipe('skewer')">Cook</button>`;
+  
+  const steakEl = document.getElementById("recipe-steak");
+  if (steakEl) steakEl.innerHTML = `<strong>🥗 Steak</strong><br><small>1 🥩+1 🌿 (Meat:${player.rawMeat}, Herb:${player.herbs})</small> <button onclick="cookRecipe('steak')">Cook</button>`;
+  
+  const saladEl = document.getElementById("recipe-salad");
+  if (saladEl) saladEl.innerHTML = `<strong>🌿 Salad</strong><br><small>2 🌿+1 🍄 (Herb:${player.herbs}, Shroom:${player.mushrooms})</small> <button onclick="cookRecipe('salad')">Cook</button>`;
 
-  // Sell & Eat Inventory HTML in Shop/Kitchen modals
-  let sellHtml = `
-    <div class="shop-item"><span>Raw Meat (${player.rawMeat})</span> <button onclick="sellItem('rawMeat', 10)">Sell (+10🪙)</button></div>
-    <div class="shop-item"><span>Wild Herb (${player.herbs})</span> <button onclick="sellItem('herbs', 8)">Sell (+8🪙)</button></div>
-    <div class="shop-item"><span>Meat Skewer (${player.skewers})</span> <button onclick="sellItem('skewers', 20)">Sell (+20🪙)</button> <button onclick="eatFood('skewers', 0.4)" style="background:#a6e3a1;">Eat</button></div>
-    <div class="shop-item"><span>Herb Steak (${player.steaks})</span> <button onclick="sellItem('steaks', 40)">Sell (+40🪙)</button> <button onclick="eatFood('steaks', 0.7)" style="background:#a6e3a1;">Eat</button></div>
-  `;
-  document.getElementById("sell-inventory-container").innerHTML = sellHtml;
+  // Sell & Eat Inventory HTML
+  const sellContainer = document.getElementById("sell-inventory-container");
+  if (sellContainer) {
+    sellContainer.innerHTML = `
+      <div class="shop-item"><span>Raw Meat (${player.rawMeat})</span> <button onclick="sellItem('rawMeat', 10)">Sell (+10🪙)</button></div>
+      <div class="shop-item"><span>Wild Herb (${player.herbs})</span> <button onclick="sellItem('herbs', 8)">Sell (+8🪙)</button></div>
+      <div class="shop-item"><span>Meat Skewer (${player.skewers})</span> <button onclick="sellItem('skewers', 20)">Sell (+20🪙)</button> <button onclick="eatFood('skewers', 0.4)" style="background:#a6e3a1;">Eat</button></div>
+      <div class="shop-item"><span>Herb Steak (${player.steaks})</span> <button onclick="sellItem('steaks', 40)">Sell (+40🪙)</button> <button onclick="eatFood('steaks', 0.7)" style="background:#a6e3a1;">Eat</button></div>
+    `;
+  }
 
   const hpEl = document.getElementById("stat-hp");
-  hpEl.textContent = `HP: ${player.hp}/${maxHp}`;
-  hpEl.style.color = player.hp <= (maxHp * 0.35) ? "#f38ba8" : "#a6e3a1";
+  if (hpEl) {
+    hpEl.textContent = `HP: ${player.hp}/${maxHp}`;
+    hpEl.style.color = player.hp <= (maxHp * 0.35) ? "#f38ba8" : "#a6e3a1";
+  }
 
   document.getElementById("disp-str").textContent = `💪 STR: ${player.str}`;
   document.getElementById("disp-dex").textContent = `⚡ DEX: ${player.dex}`;
@@ -264,7 +284,7 @@ function updateUI() {
   document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
   document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
 
-  updateNpcUI();
+  if (typeof updateNpcUI === 'function') updateNpcUI();
 }
 
 function completeQuest(questId) {
@@ -301,14 +321,20 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(20, Math.min(canvas.height - player.size, player.y));
 
-  if (currentMap === "hunt") updateForest();
-  else updateTown();
+  if (currentMap === "hunt") {
+    if (typeof updateForest === 'function') updateForest();
+  } else {
+    if (typeof updateTown === 'function') updateTown();
+  }
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (currentMap === "town") drawTown();
-  else drawForest();
+  if (currentMap === "town") {
+    if (typeof drawTown === 'function') drawTown();
+  } else {
+    if (typeof drawForest === 'function') drawForest();
+  }
 }
 
 function gameLoop() {
