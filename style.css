@@ -14,7 +14,6 @@ body {
   -webkit-user-select: none;
 }
 
-/* Top Resource & Health Bar */
 #ui-bar {
   width: 100%;
   max-width: 600px;
@@ -30,7 +29,6 @@ body {
   border-bottom: none;
 }
 
-/* 6-Stat RPG Grid */
 #stats-bar {
   width: 100%;
   max-width: 600px;
@@ -47,18 +45,40 @@ body {
   text-align: center;
 }
 
-/* Game Canvas */
+/* Map Bar */
+#map-bar {
+  width: 100%;
+  max-width: 600px;
+  background-color: #45475a;
+  padding: 6px;
+  box-sizing: border-box;
+  border-left: 2px solid #45475a;
+  border-right: 2px solid #45475a;
+  text-align: center;
+}
+
+#map-toggle-btn {
+  background-color: #a6e3a1;
+  color: #11111b;
+  width: 100%;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 canvas {
   background-color: #181825;
   border: 2px solid #45475a;
   display: block;
   width: 100%;
   max-width: 600px;
-  height: 340px;
+  height: 300px;
   touch-action: none;
 }
 
-/* Action Buttons */
 #action-panel, #save-panel {
   width: 100%;
   max-width: 600px;
@@ -67,14 +87,20 @@ canvas {
   box-sizing: border-box;
   border: 2px solid #45475a;
   border-top: none;
+}
+
+.action-group {
   display: flex;
   justify-content: space-between;
-  gap: 5px;
+  gap: 4px;
+  width: 100%;
 }
 
 #save-panel {
   background-color: #2b2c3d;
   padding: 5px 8px;
+  display: flex;
+  gap: 5px;
 }
 
 button {
@@ -102,7 +128,6 @@ button:disabled {
 #save-btn { background-color: #94e2d5; padding: 5px; }
 #reset-btn { background-color: #eba0ac; padding: 5px; }
 
-/* Mobile Controls */
 #mobile-controls {
   width: 100%;
   max-width: 600px;
@@ -110,7 +135,7 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   background-color: #242433;
-  padding: 12px 18px;
+  padding: 10px 18px;
   box-sizing: border-box;
   border: 2px solid #45475a;
   border-top: none;
@@ -119,8 +144,8 @@ button:disabled {
 }
 
 #joystick-base {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   background-color: rgba(69, 71, 90, 0.7);
   border: 2px solid #585b70;
   border-radius: 50%;
@@ -130,13 +155,13 @@ button:disabled {
 }
 
 #joystick-knob {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   background-color: #89b4fa;
   border-radius: 50%;
   position: absolute;
-  top: 29px;
-  left: 29px;
+  top: 26px;
+  left: 26px;
   pointer-events: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
@@ -161,12 +186,7 @@ button:disabled {
   touch-action: manipulation;
 }
 
-.action-circle-btn:active {
-  transform: scale(0.93);
-}
-
-#attack-btn { background-color: #f38ba8; color: #11111b; }
-#dodge-btn { background-color: #fab387; color: #11111b; }
+#attack-btn { background-color: #f38ba8; color: #11111b; width: 85px; height: 85px; border-radius: 50%; font-size: 12px; }
 
 #log {
   width: 100%;
@@ -182,14 +202,10 @@ button:disabled {
   border: 2px solid #45475a;
 }
 
-/* Modals */
 .modal {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.75);
   justify-content: center;
   align-items: center;
@@ -225,23 +241,6 @@ button:disabled {
   font-size: 11px;
 }
 
-.shop-item button {
-  max-width: 70px;
-  margin-left: 8px;
-}
-
-.stat-desc {
-  background-color: #181825;
-  padding: 8px;
-  margin: 6px 0;
-  border-radius: 6px;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.close-btn {
-  background-color: #f38ba8;
-  margin-top: 10px;
-  width: 100%;
-  padding: 10px;
-}
+.shop-item button { max-width: 70px; margin-left: 8px; }
+.stat-desc { background-color: #181825; padding: 8px; margin: 6px 0; border-radius: 6px; font-size: 11px; line-height: 1.4; }
+.close-btn { background-color: #f38ba8; margin-top: 10px; width: 100%; padding: 10px; }
