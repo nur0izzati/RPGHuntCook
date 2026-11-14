@@ -184,6 +184,18 @@
       <button class="close-btn" onclick="closeModal('char-modal')">Close</button>
     </div>
   </div>
+
+  <!-- FOREST DIFFICULTY MODAL -->
+<div id="forest-modal" class="modal">
+  <div class="modal-content modal-blue">
+    <h3 class="modal-title-blue">🌲 Choose Forest Difficulty</h3>
+    <button onclick="selectForestDifficulty('easy')" style="background:#a6e3a1; width:100%; margin:5px 0; padding:10px;">Easy (Slimes - Weak)</button>
+    <button onclick="selectForestDifficulty('medium')" style="background:#fab387; width:100%; margin:5px 0; padding:10px;">Medium (Goblins)</button>
+    <button onclick="selectForestDifficulty('hard')" style="background:#f38ba8; width:100%; margin:5px 0; padding:10px;">Hard (Orc Bosses - Tough)</button>
+    <button class="close-btn" onclick="closeModal('forest-modal')">Cancel</button>
+  </div>
+</div>
+  
   
   <script src="town.js"></script>
   <script src="forest.js"></script>
