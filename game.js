@@ -5,6 +5,7 @@ const alertBanner = document.getElementById("alert-banner");
 
 let currentMap = "town";
 let dayCount = 1;
+let timeOfDay = "Morning"; // Morning, Afternoon, Evening, Night
 
 const DEFAULT_PLAYER = {
   x: 270,
@@ -31,11 +32,17 @@ const DEFAULT_PLAYER = {
 
 let player = { ...DEFAULT_PLAYER };
 
-// NPCs with Personality & Traits
+// NPCs with Schedules, Unique Dialogue, Relationship Levels & Traits
 let npcs = [
-  { id: 1, name: "Chef Remy", x: 80, y: 100, size: 28, color: "#89dceb", trait: "Aggressive Cook", personality: "Passionate & strict about culinary art.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Steak" },
-  { id: 2, name: "Aria the Ranger", x: 450, y: 100, size: 28, color: "#a6e3a1", trait: "Forager", personality: "Brave hunter who loves wild forest ingredients.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Herb" },
-  { id: 3, name: "Merchant Leon", x: 270, y: 200, size: 28, color: "#f9e2af", trait: "Scavenger", personality: "Cunny trader looking for rare monster parts.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Gold" }
+  { id: 1, name: "Chef Remy", x: 80, y: 100, size: 28, color: "#89dceb", trait: "Aggressive Cook", personality: "Passionate & strict about culinary art.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Steak", schedule: { Morning: "Kitchen", Afternoon: "Town Square", Evening: "Inn", Night: "Home" } },
+  { id: 2, name: "Aria the Ranger", x: 450, y: 100, size: 28, color: "#a6e3a1", trait: "Forager", personality: "Brave hunter who loves wild forest ingredients.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Herb", schedule: { Morning: "Guild", Afternoon: "Town Square", Evening: "Shop", Night: "Home" } },
+  { id: 3, name: "Merchant Leon", x: 270, y: 200, size: 28, color: "#f9e2af", trait: "Scavenger", personality: "Cunny trader looking for rare monster parts.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Gold", schedule: { Morning: "Shop", Afternoon: "Guild", Evening: "Inn", Night: "Home" } }
+];
+
+// Quests at Adventurer's Guild
+let activeQuests = [
+  { id: 1, title: "Slay 3 Slimes", type: "hunt", target: 3, progress: 0, rewardGold: 60, rewardRep: 25, completed: false },
+  { id: 2, title: "Gather 2 Herbs", type: "gather", target: 2, progress: 0, rewardGold: 40, rewardRep: 15, completed: false }
 ];
 
 let enemies = [
@@ -54,6 +61,16 @@ function showAlert(text, type = "info") {
   setTimeout(() => { alertBanner.style.opacity = "0"; }, 3500);
 }
 
+function showCenterPopup(title, msg) {
+  document.getElementById("popup-title").textContent = title;
+  document.getElementById("popup-msg").textContent = msg;
+  document.getElementById("center-popup-overlay").style.display = "flex";
+}
+
+function closeCenterPopup() {
+  document.getElementById("center-popup-overlay").style.display = "none";
+}
+
 function spawnWildItems() {
   wildItems = [
     { type: "herb", icon: "🌿", color: "#a6e3a1", x: 120, y: 90, size: 22, active: true },
@@ -61,26 +78,42 @@ function spawnWildItems() {
   ];
 }
 
-// --- INN SLEEP SYSTEM (FREE days 1-3, then scales) ---
+// --- ADVANCE TIME & INN/CAMP RESTING ---
+function advanceTime() {
+  if (timeOfDay === "Morning") timeOfDay = "Afternoon";
+  else if (timeOfDay === "Afternoon") timeOfDay = "Evening";
+  else if (timeOfDay === "Evening") timeOfDay = "Night";
+  else {
+    timeOfDay = "Morning";
+    dayCount++;
+    npcs.forEach(n => { n.talkedToday = false; });
+  }
+}
+
 function sleepAtInn() {
-  const cost = dayCount <= 3 ? 0 : (dayCount - 3) * 10;
+  const cost = 25;
   if (player.gold < cost) {
-    showAlert(`Inn costs ${cost} Gold tonight!`, "danger");
+    showAlert(`Inn costs ${cost} Gold for lodging and food!`, "danger");
     return;
   }
   player.gold -= cost;
-  dayCount++;
-  player.hp = getMaxHp(); // Fully restores HP!
-  
-  npcs.forEach(n => { n.talkedToday = false; });
-  showAlert(`☀️ Day ${dayCount}! Slept at the Inn (${cost === 0 ? "FREE" : cost + " 🪙"}) & fully restored HP!`, "success");
+  player.hp = getMaxHp(); // Full HP restoration
+  advanceTime();
+
+  showCenterPopup("🛌 Slept at the Inn", `Paid ${cost} Gold. You rested comfortably, ate a warm meal, and fully restored your HP to maximum! (Current: Day ${dayCount} - ${timeOfDay})`);
   updateUI();
 }
 
-// --- MAP SWITCHER WITH DIFFICULTY CHOICE ---
+function restAtCamp() {
+  advanceTime();
+  showCenterPopup("⛺ Rested at Camp", `You set up a campfire in the wild for free. Time advanced to ${timeOfDay}, but HP was not fully restored.`);
+  updateUI();
+}
+
+// --- MAP SWITCHER (TOWN BUILDINGS & EXPLORATION) ---
 function switchMap() {
   if (currentMap === "town") {
-    let choice = prompt("Choose Forest Difficulty:\n1. Easy (Slimes - Weak, Easy Meat)\n2. Medium (Goblins - Balanced)\n3. Hard (Orc Bosses - Tough, High Rewards)\nEnter 1, 2, or 3:", "1");
+    let choice = prompt("Choose Forest Difficulty:\n1. Easy (Slimes)\n2. Medium (Goblins)\n3. Hard (Orc Bosses)\nEnter 1, 2, or 3:", "1");
     if (!choice) return;
 
     currentMap = "hunt";
@@ -88,80 +121,35 @@ function switchMap() {
     document.getElementById("map-toggle-btn").style.backgroundColor = "#f9e2af";
 
     if (choice === "1") {
-      enemies = [
-        { name: "Easy Slime", color: "#a6e3a1", x: 420, y: 120, size: 28, hp: 15, maxHp: 15, atk: 5, dropType: "meat", alive: true, state: "patrol", dirX: 1, dirY: 0, moveTimer: 0, windupTimer: 0, maxWindup: 70 }
-      ];
-      showAlert("Entered EASY Forest! Monsters are weak.", "success");
+      enemies = [{ name: "Easy Slime", color: "#a6e3a1", x: 420, y: 120, size: 28, hp: 15, maxHp: 15, atk: 5, dropType: "meat", alive: true, state: "patrol", dirX: 1, dirY: 0, moveTimer: 0, windupTimer: 0, maxWindup: 70 }];
     } else if (choice === "3") {
-      enemies = [
-        { name: "Hard Orc Warlord", color: "#f38ba8", x: 300, y: 60, size: 42, hp: 120, maxHp: 120, atk: 35, dropType: "prime", alive: true, state: "patrol", dirX: 0, dirY: -1, moveTimer: 0, windupTimer: 0, maxWindup: 35 }
-      ];
-      showAlert("Entered HARD Forest! Dangerous boss monsters!", "danger");
+      enemies = [{ name: "Hard Orc Warlord", color: "#f38ba8", x: 300, y: 60, size: 42, hp: 120, maxHp: 120, atk: 35, dropType: "prime", alive: true, state: "patrol", dirX: 0, dirY: -1, moveTimer: 0, windupTimer: 0, maxWindup: 35 }];
     } else {
-      enemies = [
-        { name: "Medium Goblin", color: "#fab387", x: 150, y: 200, size: 32, hp: 45, maxHp: 45, atk: 18, dropType: "meat", alive: true, state: "patrol", dirX: -1, dirY: 1, moveTimer: 0, windupTimer: 0, maxWindup: 50 }
-      ];
-      showAlert("Entered MEDIUM Forest. Standard hunt.", "info");
+      enemies = [{ name: "Medium Goblin", color: "#fab387", x: 150, y: 200, size: 32, hp: 45, maxHp: 45, atk: 18, dropType: "meat", alive: true, state: "patrol", dirX: -1, dirY: 1, moveTimer: 0, windupTimer: 0, maxWindup: 50 }];
     }
 
     player.x = 60; player.y = 120;
     spawnWildItems();
+    showAlert("Entered Forest. Watch out for patrolling monsters!", "info");
   } else {
     currentMap = "town";
     document.getElementById("map-toggle-btn").textContent = "🌲 Travel to Hunting Grounds";
     document.getElementById("map-toggle-btn").style.backgroundColor = "#a6e3a1";
-    showAlert("Safe in Town! Monsters cannot enter here.", "success");
+    showAlert("Safe in Town!", "success");
     player.x = 270; player.y = 120;
     updateUI();
   }
 }
 
-// --- WEIGHTED GACHA SYSTEM ---
-function pullGacha() {
-  const cost = 50;
-  if (player.gold < cost) {
-    showAlert("Not enough Gold for Gacha! Need 50 🪙", "danger");
-    return;
-  }
-  player.gold -= cost;
-
-  const roll = Math.random() * 100;
-  let rewardName = "";
-  let rarity = "";
-
-  if (roll < 60) {
-    rarity = "Common ⚪";
-    const items = ["Silk Ribbon", "Bronze Ring", "Wild Berries", "Cloth Handkerchief"];
-    rewardName = items[Math.floor(Math.random() * items.length)];
-    player.rawMeat = Math.min(99, player.rawMeat + 2);
-  } else if (roll < 85) {
-    rarity = "Rare 🔵";
-    const items = ["Silver Necklace", "Ranger Cape", "Sturdy Boots", "Mana Tome (+1 INT)"];
-    rewardName = items[Math.floor(Math.random() * items.length)];
-    if (rewardName.includes("INT")) player.int += 1;
-    else player.herbs = Math.min(99, player.herbs + 3);
-  } else if (roll < 97) {
-    rarity = "Epic 🟣";
-    const items = ["Gold Crown", "Knight's Gauntlets", "Warrior Tome (+2 STR)"];
-    rewardName = items[Math.floor(Math.random() * items.length)];
-    if (rewardName.includes("STR")) player.str += 2;
-    else player.gold += 80;
-  } else {
-    rarity = "Legendary 🟡";
-    const items = ["Celestial Diadem", "Dragon Scale Cloak", "Godly Tome (+3 All Stats)"];
-    rewardName = items[Math.floor(Math.random() * items.length)];
-    if (rewardName.includes("All Stats")) { player.str += 3; player.dex += 3; player.con += 3; }
-    else player.primeMeat = Math.min(99, player.primeMeat + 2);
-  }
-
-  player.inventory.push({ name: rewardName, rarity: rarity });
-  const resultMsg = `[${rarity}] You pulled: ${rewardName}!`;
-  document.getElementById("gacha-result-box").textContent = resultMsg;
-  showAlert(resultMsg, "success");
-  updateUI();
+// --- RELATIONSHIP STAGE HELPER ---
+function getRelationshipStatus(hearts) {
+  if (hearts >= 10) return "💍 Married";
+  if (hearts >= 7) return "💖 Lover";
+  if (hearts >= 4) return "💕 Dating";
+  return "🤝 Friend";
 }
 
-// --- UNIQUE NPC DIALOGUE & DATING SYSTEM ---
+// --- UNIQUE NPC DIALOGUE & DATING ---
 let activeDlgNpc = null;
 
 function openDialogue(npcId) {
@@ -169,19 +157,18 @@ function openDialogue(npcId) {
   if (!npc) return;
   activeDlgNpc = npc;
 
-  document.getElementById("dlg-npc-name").textContent = `Chatting with ${npc.name}`;
+  document.getElementById("dlg-npc-name").textContent = `Chatting with ${npc.name} (${getRelationshipStatus(npc.hearts)})`;
   
   let intro = "";
-  if (npc.id === 1) intro = "Chef Remy: 'Hmph. Are you here to inspect my kitchen, or do you actually know good food?'";
-  else if (npc.id === 2) intro = "Aria: 'The forest whispers of danger today... Have you brought any rare herbs?'";
-  else intro = "Leon: 'Gold makes the world go round, traveler. Got any rare items to trade?'";
+  if (npc.id === 1) intro = `Chef Remy (${npc.schedule[timeOfDay]}): 'Hmph. Are you here to inspect my kitchen?'`;
+  else if (npc.id === 2) intro = `Aria (${npc.schedule[timeOfDay]}): 'The forest whispers of danger today...'`;
+  else intro = `Leon (${npc.schedule[timeOfDay]}): 'Gold makes the world go round, traveler.'`;
 
   document.getElementById("dlg-text").textContent = intro;
 
   let choicesHtml = `
     <button onclick="answerDialogue('compliment')">Compliment their craft (+Affection)</button>
     <button onclick="answerDialogue('quest')">Ask about local rumors</button>
-    <button onclick="answerDialogue('tease')">Tease them playfully</button>
   `;
   document.getElementById("dlg-choices").innerHTML = choicesHtml;
   openModal('dialogue-modal');
@@ -192,17 +179,13 @@ function answerDialogue(type) {
   const npc = activeDlgNpc;
 
   if (type === 'compliment') {
-    npc.hearts = Math.min(10, npc.hearts + 1);
-    showAlert(`💖 ${npc.name} appreciated your kind words! (+1 ❤️)`, "success");
-    document.getElementById("dlg-text").textContent = `"${npc.name}: Well... that's very sweet of you to notice."`;
-  } else if (type === 'quest') {
-    npc.hearts = Math.min(10, npc.hearts + 1);
-    showAlert(`🗺️ ${npc.name} shared a helpful tip! (+1 ❤️)`, "success");
-    document.getElementById("dlg-text").textContent = `"${npc.name}: Keep your eyes open for wild mushrooms near the thicket."`;
+    npc.hearts = Math.min(15, npc.hearts + 1);
+    showAlert(`💖 ${npc.name} appreciated your words! Status: ${getRelationshipStatus(npc.hearts)}`, "success");
+    document.getElementById("dlg-text").textContent = `"${npc.name}: Well... that's very sweet of you."`;
   } else {
-    npc.hearts = Math.max(0, npc.hearts - 1);
-    showAlert(`💢 ${npc.name} didn't like that joke. (-1 ❤️)`, "danger");
-    document.getElementById("dlg-text").textContent = `"${npc.name}: Hah. Very funny. Not."`;
+    npc.hearts = Math.min(15, npc.hearts + 1);
+    showAlert(`🗺️ ${npc.name} shared a helpful tip!`, "success");
+    document.getElementById("dlg-text").textContent = `"${npc.name}: Keep your eyes open near the thicket."`;
   }
   updateUI();
 }
@@ -216,11 +199,11 @@ function toggleParty(npcId) {
     showAlert(`${npc.name} left your party.`, "info");
   } else {
     if (npc.hearts < 3) {
-      showAlert(`You need at least 3 ❤️ Hearts of affection to invite ${npc.name}!`, "danger");
+      showAlert(`You need at least 3 ❤️ Hearts to invite ${npc.name}!`, "danger");
       return;
     }
     npc.inParty = true;
-    showAlert(`🤝 ${npc.name} joined your party!`, "success");
+    showAlert(`🤝 ${npc.name} joined your party from the Guild!`, "success");
   }
   updateUI();
   openModal('npc-modal');
@@ -232,10 +215,64 @@ function giftItemToNpc(npcId, itemIndex) {
   if (!npc || !item) return;
 
   player.inventory.splice(itemIndex, 1);
-  npc.hearts = Math.min(10, npc.hearts + 3);
+  npc.hearts = Math.min(15, npc.hearts + 3);
   showAlert(`🎁 Gifted ${item.name} to ${npc.name}! (+3 ❤️)`, "success");
   updateUI();
   openModal('npc-modal');
+}
+
+// --- ADVENTURER'S GUILD & QUESTS ---
+function completeQuest(questId) {
+  const q = activeQuests.find(quest => quest.id === questId);
+  if (!q || q.completed) return;
+
+  if (q.progress >= q.target) {
+    q.completed = true;
+    player.gold += q.rewardGold;
+    player.reputation += q.rewardRep;
+    showAlert(`🏆 Quest Completed! Earned ${q.rewardGold} Gold & Reputation!`, "success");
+    updateUI();
+    openModal('guild-modal');
+  } else {
+    showAlert(`Quest requirements not met yet (${q.progress}/${q.target})`, "danger");
+  }
+}
+
+// --- GACHA SYSTEM ---
+function pullGacha() {
+  const cost = 50;
+  if (player.gold < cost) {
+    showAlert("Not enough Gold for Gacha! Need 50 🪙", "danger");
+    return;
+  }
+  player.gold -= cost;
+
+  const roll = Math.random() * 100;
+  let rewardName = "", rarity = "";
+
+  if (roll < 60) {
+    rarity = "Common ⚪";
+    rewardName = "Silk Ribbon";
+    player.rawMeat = Math.min(99, player.rawMeat + 2);
+  } else if (roll < 85) {
+    rarity = "Rare 🔵";
+    rewardName = "Silver Necklace";
+    player.herbs = Math.min(99, player.herbs + 3);
+  } else if (roll < 97) {
+    rarity = "Epic 🟣";
+    rewardName = "Gold Crown";
+    player.gold += 80;
+  } else {
+    rarity = "Legendary 🟡";
+    rewardName = "Celestial Diadem";
+    player.primeMeat = Math.min(99, player.primeMeat + 2);
+  }
+
+  player.inventory.push({ name: rewardName, rarity: rarity });
+  const resultMsg = `[${rarity}] You pulled: ${rewardName}!`;
+  document.getElementById("gacha-result-box").textContent = resultMsg;
+  showAlert(resultMsg, "success");
+  updateUI();
 }
 
 // --- RPG FORMULAS ---
@@ -245,7 +282,7 @@ function getMoveSpeed() { return 3 + (player.dex * 0.1); }
 function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); }
 function getUpgradeCost() { return Math.max(5, 20 - Math.floor((player.cha - 10) * 1.5)); }
 
-// --- MOBILE TOUCH JOYSTICK CONTROLS ---
+// --- TOUCH JOYSTICK CONTROLS ---
 let activePointerId = null;
 let joystickMoveX = 0;
 let joystickMoveY = 0;
@@ -275,7 +312,7 @@ function resetJoystick(pointerId) {
   knob.style.transform = `translate(0px, 0px)`;
 }
 
-// --- ACTIONS & COOKING ---
+// --- ACTIONS & KITCHEN WITH REMAINING INGREDIENTS COUNTS ---
 function triggerMainAction() {
   if (currentMap === "hunt") {
     wildItems.forEach(item => {
@@ -284,13 +321,21 @@ function triggerMainAction() {
         const dy = (player.y + 14) - (item.y + 11);
         if (Math.sqrt(dx*dx + dy*dy) < 45) {
           item.active = false;
-          if (item.type === "herb") { player.herbs = Math.min(99, player.herbs + 1); showAlert("🌿 Grabbed Wild Herb!", "success"); }
-          else { player.mushrooms = Math.min(99, player.mushrooms + 1); showAlert("🍄 Grabbed Mushroom!", "success"); }
+          if (item.type === "herb") {
+            player.herbs = Math.min(99, player.herbs + 1);
+            showAlert("🌿 Grabbed Wild Herb!", "success");
+            // Check quest progress
+            activeQuests.forEach(q => { if (q.type === 'gather' && !q.completed) q.progress = Math.min(q.target, q.progress + 1); });
+          } else {
+            player.mushrooms = Math.min(99, player.mushrooms + 1);
+            showAlert("🍄 Grabbed Mushroom!", "success");
+          }
           setTimeout(() => { item.active = true; item.x = Math.random() * 450 + 50; item.y = Math.random() * 200 + 40; }, 4000);
         }
       }
     });
   } else {
+    // Interact with Town buildings/NPCs based on proximity
     npcs.forEach(n => {
       const dx = (player.x + 14) - (n.x + 14);
       const dy = (player.y + 14) - (n.y + 14);
@@ -310,44 +355,52 @@ function cookRecipe(type) {
 
 // --- SAVE / LOAD ---
 function saveGame() {
-  localStorage.setItem("RPGHuntCook_Save_v5", JSON.stringify({ player, npcs, dayCount }));
+  localStorage.setItem("RPGHuntCook_Save_v6", JSON.stringify({ player, npcs, dayCount, timeOfDay, activeQuests }));
   showAlert("💾 Game Saved Successfully!", "success");
 }
 
 function loadGame() {
-  const saved = localStorage.getItem("RPGHuntCook_Save_v5");
+  const saved = localStorage.getItem("RPGHuntCook_Save_v6");
   if (saved) {
     const data = JSON.parse(saved);
     player = { ...DEFAULT_PLAYER, ...data.player };
     if (data.npcs) npcs = data.npcs;
     if (data.dayCount) dayCount = data.dayCount;
+    if (data.timeOfDay) timeOfDay = data.timeOfDay;
+    if (data.activeQuests) activeQuests = data.activeQuests;
     showAlert("📂 Save file loaded!", "success");
   }
 }
 
 function resetGame() {
   if (confirm("Reset all progress?")) {
-    localStorage.removeItem("RPGHuntCook_Save_v5");
+    localStorage.removeItem("RPGHuntCook_Save_v6");
     player = { ...DEFAULT_PLAYER };
-    dayCount = 1;
+    dayCount = 1; timeOfDay = "Morning";
     if (currentMap === "hunt") switchMap();
     updateUI();
     showAlert("🔄 New game started!", "info");
   }
 }
 
-// --- UI UPDATES ---
+// --- UI UPDATES WITH DYNAMIC INGREDIENT COUNTS ---
 function updateUI() {
   const maxHp = getMaxHp();
   const cost = getUpgradeCost();
 
-  document.getElementById("stat-day").textContent = `☀️ Day ${dayCount}`;
+  document.getElementById("stat-daytime").textContent = `☀️ Day ${dayCount} (${timeOfDay})`;
   document.getElementById("stat-gold").textContent = `🪙 ${player.gold}`;
 
   document.getElementById("inv-meat").textContent = `🥩: ${player.rawMeat}/99`;
   document.getElementById("inv-prime").textContent = `🍖: ${player.primeMeat}/99`;
   document.getElementById("inv-herb").textContent = `🌿: ${player.herbs}/99`;
   document.getElementById("inv-shroom").textContent = `🍄: ${player.mushrooms}/99`;
+
+  // Real-time ingredient remaining display in Kitchen modal
+  document.getElementById("recipe-skewer").innerHTML = `<strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat (Left: ${player.rawMeat})</small>`;
+  document.getElementById("recipe-steak").innerHTML = `<strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 + 1 🌿 (Meat: ${player.rawMeat}, Herb: ${player.herbs})</small>`;
+  document.getElementById("recipe-feast").innerHTML = `<strong>🍖 Beast Feast</strong><br><small>1 🍖 + 1 🍄 (Prime: ${player.primeMeat}, Shroom: ${player.mushrooms})</small>`;
+  document.getElementById("recipe-salad").innerHTML = `<strong>🌿 Herbal Salad</strong><br><small>2 🌿 + 1 🍄 (Herb: ${player.herbs}, Shroom: ${player.mushrooms})</small>`;
 
   const hpEl = document.getElementById("stat-hp");
   hpEl.textContent = `HP: ${player.hp}/${maxHp}`;
@@ -360,6 +413,19 @@ function updateUI() {
   document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
   document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
 
+  // Guild Quests HTML
+  let questHtml = "";
+  activeQuests.forEach(q => {
+    questHtml += `
+      <div class="shop-item" style="flex-direction:column; align-items:flex-start;">
+        <div><strong>${q.title}</strong></div>
+        <div style="font-size:10px; color:#b4befe; margin:2px 0;">Progress: ${q.progress}/${q.target} | Reward: ${q.rewardGold} 🪙</div>
+        <button onclick="completeQuest(${q.id})" ${q.completed || q.progress < q.target ? 'disabled' : ''} style="background:${q.completed ? '#45475a' : '#a6e3a1'}; margin-top:5px;">${q.completed ? 'Completed' : 'Claim Reward'}</button>
+      </div>
+    `;
+  });
+  document.getElementById("quest-board-container").innerHTML = questHtml;
+
   let npcHtml = "";
   npcs.forEach(n => {
     let giftsOptions = "";
@@ -369,8 +435,8 @@ function updateUI() {
 
     npcHtml += `
       <div class="shop-item" style="flex-direction:column; align-items:flex-start;">
-        <div><strong>${n.name}</strong> (❤️ ${n.hearts}/10) | Party: ${n.inParty ? '🟢 Joined' : '⚪ Away'}</div>
-        <div style="font-size:10px; color:#b4befe; margin:2px 0;">Trait: ${n.trait}</div>
+        <div><strong>${n.name}</strong> (${getRelationshipStatus(n.hearts)} - ❤️ ${n.hearts}/15)</div>
+        <div style="font-size:10px; color:#b4befe; margin:2px 0;">Location (${timeOfDay}): ${n.schedule[timeOfDay]} | Party: ${n.inParty ? '🟢 Joined' : '⚪ Away'}</div>
         <div style="display:flex; gap:4px; width:100%; margin-top:5px; flex-wrap:wrap;">
           <button onclick="openDialogue(${n.id})">Chat</button>
           <button onclick="toggleParty(${n.id})" style="background:${n.inParty ? '#eba0ac' : '#a6e3a1'};">${n.inParty ? 'Dismiss' : 'Invite (Req 3 ❤️)'}</button>
@@ -381,18 +447,13 @@ function updateUI() {
   });
   document.getElementById("npc-list-container").innerHTML = npcHtml;
 
-  let wardrobeHtml = "<strong>🎒 Gacha Wardrobe & Collectibles:</strong><br>";
-  if (player.inventory.length === 0) wardrobeHtml += "<small>Empty! Pull gacha items to gift NPCs.</small>";
-  else player.inventory.forEach(i => { wardrobeHtml += `- ${i.name} (${i.rarity})<br>`; });
-  document.getElementById("desc-wardrobe").innerHTML = wardrobeHtml;
-
   ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(stat => {
     const btn = document.getElementById(`btn-${stat}`);
     if (btn) btn.textContent = `${cost} 🪙`;
   });
 }
 
-// --- COMBAT & MONSTER ATTACK FIX ---
+// --- COMBAT & QUEST PROGRESSION ---
 function triggerAttack() {
   if (currentMap !== "hunt" || player.hp <= 0) return;
 
@@ -413,14 +474,12 @@ function triggerAttack() {
       const gained = Math.min(99, (Math.random()*100 < 30 ? 2 : 1));
       if (closest.dropType === "prime") {
         player.primeMeat = Math.min(99, player.primeMeat + gained);
-        showAlert(`🏆 Defeated ${closest.name}! Got ${gained}x Prime Meat!`, "success");
+        showAlert(`🏆 Defeated ${closest.name}! Got Prime Meat!`, "success");
       } else {
         player.rawMeat = Math.min(99, player.rawMeat + gained);
-        showAlert(`⚔️ Defeated ${closest.name}! Got ${gained}x Meat!`, "success");
-      }
-      if (npcs.some(n => n.inParty && n.trait.includes("Scavenger"))) {
-        player.gold += 15;
-        showAlert("💰 Leon scavenged 15 bonus Gold!", "success");
+        showAlert(`⚔️ Defeated ${closest.name}! Got Meat!`, "success");
+        // Update hunt quest
+        activeQuests.forEach(q => { if (q.type === 'hunt' && !q.completed) q.progress = Math.min(q.target, q.progress + 1); });
       }
       updateUI();
       setTimeout(() => { closest.hp = closest.maxHp; closest.alive = true; closest.x = Math.random()*400+50; closest.y = Math.random()*200+40; }, 4000);
@@ -449,7 +508,7 @@ function buyUpgrade(stat) {
   }
 }
 
-// --- MAIN GAME LOOP ---
+// --- MAIN LOOP WITH JOYSTICK TOWN EXPLORATION ---
 function update() {
   if (player.hp <= 0) return;
 
@@ -463,13 +522,6 @@ function update() {
 
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(20, Math.min(canvas.height - player.size, player.y));
-
-  npcs.forEach(n => {
-    if (n.inParty && currentMap === "hunt") {
-      if (n.x < player.x) n.x += 1.2; else if (n.x > player.x) n.x -= 1.2;
-      if (n.y < player.y) n.y += 1.2; else if (n.y > player.y) n.y -= 1.2;
-    }
-  });
 
   if (currentMap === "hunt") {
     enemies.forEach(e => {
@@ -504,16 +556,6 @@ function update() {
           if (e.y < player.y) e.y += 0.8; else e.y -= 0.8;
         } else {
           e.state = "patrol";
-          e.moveTimer++;
-          if (e.moveTimer > 80) {
-            e.dirX = (Math.random() - 0.5) * 2;
-            e.dirY = (Math.random() - 0.5) * 2;
-            e.moveTimer = 0;
-          }
-          e.x += e.dirX * 0.8;
-          e.y += e.dirY * 0.8;
-          e.x = Math.max(20, Math.min(canvas.width - 40, e.x));
-          e.y = Math.max(20, Math.min(canvas.height - 40, e.y));
         }
       }
     });
@@ -524,10 +566,17 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (currentMap === "town") {
-    ctx.fillStyle = "#fab387";
-    ctx.fillRect(40, 50, 140, 100);
-    ctx.fillStyle = "#11111b"; ctx.font="12px sans-serif"; ctx.textAlign="center"; ctx.fillText("🛌 INN (Sleep)", 110, 105);
+    // Draw Town Buildings (Inn, Guild, Shop, Kitchen)
+    ctx.fillStyle = "#fab387"; ctx.fillRect(30, 40, 110, 80);
+    ctx.fillStyle = "#111"; ctx.font="11px sans-serif"; ctx.textAlign="center"; ctx.fillText("🛌 Inn", 85, 85);
 
+    ctx.fillStyle = "#89dceb"; ctx.fillRect(160, 40, 110, 80);
+    ctx.fillStyle = "#111"; ctx.fillText("⚔️ Guild", 215, 85);
+
+    ctx.fillStyle = "#f9e2af"; ctx.fillRect(290, 40, 110, 80);
+    ctx.fillStyle = "#111"; ctx.fillText("🛒 Shop", 345, 85);
+
+    // Draw NPCs at their schedule locations in Town
     npcs.forEach(n => {
       ctx.fillStyle = n.color;
       ctx.fillRect(n.x, n.y, n.size, n.size);
@@ -535,6 +584,7 @@ function draw() {
       ctx.fillText(`${n.name} (❤️${n.hearts})`, n.x + n.size/2, n.y - 6);
     });
 
+    // Hero
     ctx.fillStyle = "#89b4fa";
     ctx.fillRect(player.x, player.y, player.size, player.size);
   } else {
@@ -552,13 +602,6 @@ function draw() {
         ctx.fillRect(e.x, e.y, e.size, e.size);
         ctx.fillStyle = "#45475a"; ctx.fillRect(e.x, e.y-8, e.size, 5);
         ctx.fillStyle = "#fab387"; ctx.fillRect(e.x, e.y-8, e.size*(e.hp/e.maxHp), 5);
-      }
-    });
-
-    npcs.forEach(n => {
-      if (n.inParty) {
-        ctx.fillStyle = n.color;
-        ctx.fillRect(n.x, n.y, 24, 24);
       }
     });
 
