@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Bigger Screen & Dodge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RPGHuntCook - Fixed Joystick & Player HP Bar</title>
   <style>
     body {
       background-color: #1e1e2e;
@@ -17,7 +17,8 @@
       margin: 0;
       padding: 6px;
       box-sizing: border-box;
-      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     /* Top Resource & Health Bar */
@@ -53,7 +54,7 @@
       text-align: center;
     }
 
-    /* BIGGER GAME SCREEN */
+    /* Bigger Game Screen */
     canvas {
       background-color: #181825;
       border: 2px solid #45475a;
@@ -61,6 +62,7 @@
       width: 100%;
       max-width: 600px;
       height: 340px;
+      touch-action: none;
     }
 
     /* Action Buttons */
@@ -87,6 +89,7 @@
       cursor: pointer;
       font-size: 11px;
       flex: 1;
+      touch-action: manipulation;
     }
 
     button:disabled {
@@ -107,41 +110,45 @@
       justify-content: space-between;
       align-items: center;
       background-color: #242433;
-      padding: 10px 15px;
+      padding: 12px 18px;
       box-sizing: border-box;
       border: 2px solid #45475a;
       border-top: none;
       border-radius: 0 0 8px 8px;
-    }
-
-    #joystick-base {
-      width: 90px;
-      height: 90px;
-      background-color: rgba(69, 71, 90, 0.6);
-      border-radius: 50%;
-      position: relative;
       touch-action: none;
     }
 
+    #joystick-base {
+      width: 100px;
+      height: 100px;
+      background-color: rgba(69, 71, 90, 0.7);
+      border: 2px solid #585b70;
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
+      cursor: grab;
+    }
+
     #joystick-knob {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       background-color: #89b4fa;
       border-radius: 50%;
       position: absolute;
-      top: 25px;
-      left: 25px;
+      top: 29px;
+      left: 29px;
       pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     }
 
     .button-group {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
 
     .action-circle-btn {
-      width: 70px;
-      height: 70px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       border: none;
       font-size: 11px;
@@ -151,6 +158,11 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      touch-action: manipulation;
+    }
+
+    .action-circle-btn:active {
+      transform: scale(0.93);
     }
 
     #attack-btn { background-color: #f38ba8; color: #11111b; }
@@ -270,7 +282,7 @@
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Welcome! Screen is bigger. Use 🍲 Eat Stew to restore HP when low, or tap 🏃‍♂️ DODGE to roll away!</div>
+  <div id="log">Drag the blue joystick on the left to move! Watch the green HP bar above your hero.</div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
@@ -368,32 +380,61 @@
     window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
     window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
 
-    let joystickActive = false, joystickMoveX = 0, joystickMoveY = 0;
+    // --- FIXED MULTI-TOUCH POINTER JOYSTICK ---
+    let activePointerId = null;
+    let joystickMoveX = 0;
+    let joystickMoveY = 0;
     const base = document.getElementById("joystick-base");
     const knob = document.getElementById("joystick-knob");
 
-    base.addEventListener("touchstart", (e) => { e.preventDefault(); joystickActive = true; handleMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
-    base.addEventListener("touchmove", (e) => { e.preventDefault(); if (joystickActive) handleMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
-    base.addEventListener("touchend", (e) => { e.preventDefault(); resetJoystick(); }, {passive: false});
-    base.addEventListener("mousedown", (e) => { joystickActive = true; handleMove(e.clientX, e.clientY); });
-    window.addEventListener("mousemove", (e) => { if (joystickActive) handleMove(e.clientX, e.clientY); });
-    window.addEventListener("mouseup", resetJoystick);
+    base.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      activePointerId = e.pointerId;
+      base.setPointerCapture(e.pointerId); // Locks this finger to the joystick!
+      updateJoystickPosition(e.clientX, e.clientY);
+    });
 
-    function handleMove(clientX, clientY) {
+    base.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== activePointerId) return;
+      e.preventDefault();
+      updateJoystickPosition(e.clientX, e.clientY);
+    });
+
+    base.addEventListener("pointerup", (e) => {
+      if (e.pointerId === activePointerId) {
+        resetJoystick(e.pointerId);
+      }
+    });
+
+    base.addEventListener("pointercancel", (e) => {
+      if (e.pointerId === activePointerId) {
+        resetJoystick(e.pointerId);
+      }
+    });
+
+    function updateJoystickPosition(clientX, clientY) {
       const rect = base.getBoundingClientRect();
       const dx = clientX - (rect.left + rect.width / 2);
       const dy = clientY - (rect.top + rect.height / 2);
       const distance = Math.sqrt(dx * dx + dy * dy);
       const maxRadius = 35;
-      let angle = Math.atan2(dy, dx);
-      let pull = Math.min(distance, maxRadius);
+
+      const angle = Math.atan2(dy, dx);
+      const pull = Math.min(distance, maxRadius);
+
       joystickMoveX = Math.cos(angle) * (pull / maxRadius);
       joystickMoveY = Math.sin(angle) * (pull / maxRadius);
+
       knob.style.transform = `translate(${Math.cos(angle) * pull}px, ${Math.sin(angle) * pull}px)`;
     }
 
-    function resetJoystick() {
-      joystickActive = false; joystickMoveX = 0; joystickMoveY = 0;
+    function resetJoystick(pointerId) {
+      if (pointerId !== undefined && base.hasPointerCapture(pointerId)) {
+        base.releasePointerCapture(pointerId);
+      }
+      activePointerId = null;
+      joystickMoveX = 0;
+      joystickMoveY = 0;
       knob.style.transform = `translate(0px, 0px)`;
     }
 
@@ -408,7 +449,7 @@
       
       const hpEl = document.getElementById("stat-hp");
       hpEl.textContent = `HP: ${player.hp}/${maxHp}`;
-      hpEl.style.color = player.hp < (maxHp * 0.3) ? "#f38ba8" : "#a6e3a1";
+      hpEl.style.color = player.hp <= (maxHp * 0.35) ? "#f38ba8" : "#a6e3a1";
 
       document.getElementById("disp-str").textContent = `💪 STR: ${player.str}`;
       document.getElementById("disp-dex").textContent = `⚡ DEX: ${player.dex}`;
@@ -458,7 +499,7 @@
       const maxHp = getMaxHp();
       if (player.cookedDishes >= 1 && player.hp < maxHp) {
         player.cookedDishes--;
-        const healAmount = Math.floor(maxHp * 0.5); // Restores 50% HP
+        const healAmount = Math.floor(maxHp * 0.5);
         player.hp = Math.min(maxHp, player.hp + healAmount);
         logEl.textContent = `🍲 Ate a hot stew and restored ${healAmount} HP!`;
         updateUI();
@@ -475,13 +516,12 @@
       }
     }
 
-    // Manual Dodge Button Action
     function triggerDodge() {
       if (player.dodgeTimer > 0 || player.hp <= 0) return;
       player.isDodging = true;
-      player.dodgeTimer = 45; // Cooldown frames
+      player.dodgeTimer = 45;
       logEl.textContent = "🏃‍♂️ DODGED! You rolled smoothly out of harm's way!";
-      setTimeout(() => { player.isDodging = false; }, 300); // 0.3s invulnerability window
+      setTimeout(() => { player.isDodging = false; }, 350);
     }
 
     function triggerAttack() {
@@ -511,13 +551,12 @@
           updateUI();
           setTimeout(respawnEnemy, 1500);
         } else {
-          // Check if player is dodging or rolls a passive dodge
           if (player.isDodging || (Math.random() * 100) < getDodgeChance()) {
-            logEl.textContent = `Hit slime for ${dmg} DMG! ⚡ Successfully dodged the counter-attack!`;
+            logEl.textContent = `Hit slime for ${dmg} DMG! ⚡ Dodged the counter-attack!`;
           } else {
             const taken = Math.max(1, enemy.atk - getDamageReduction());
             player.hp = Math.max(0, player.hp - taken);
-            logEl.textContent = `Hit slime for ${dmg} DMG! Took ${taken} DMG. (Tip: Use 🍲 Eat Stew when HP is low!)`;
+            logEl.textContent = `Hit slime for ${dmg} DMG! Took ${taken} DMG. (Tap 🍲 Eat Stew to heal!)`;
             if (player.hp === 0) logEl.textContent = "You fainted! Refresh page to restart.";
           }
         }
@@ -535,7 +574,7 @@
       if (player.gold >= cost) {
         player.gold -= cost;
         player[stat] += 2;
-        if (stat === 'con') player.hp = getMaxHp(); // Full heal on CON upgrade
+        if (stat === 'con') player.hp = getMaxHp();
         logEl.textContent = `Trained ${stat.toUpperCase()} +2! Check 📜 STATS.`;
         updateUI();
       } else {
@@ -555,26 +594,51 @@
       if (keys["a"] || keys["arrowleft"]) moveX = -1;
       if (keys["d"] || keys["arrowright"]) moveX = 1;
 
-      const spd = getMoveSpeed() * (player.isDodging ? 1.8 : 1.0); // Boost speed while rolling
+      const spd = getMoveSpeed() * (player.isDodging ? 1.8 : 1.0);
       if (moveX !== 0 || moveY !== 0) {
         player.x += moveX * spd;
         player.y += moveY * spd;
       }
 
       player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-      player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+      player.y = Math.max(12, Math.min(canvas.height - player.size, player.y));
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Player (Semitransparent if dodging)
+      // Draw Player
       ctx.fillStyle = player.isDodging ? "rgba(137, 180, 250, 0.5)" : "#89b4fa";
       ctx.fillRect(player.x, player.y, player.size, player.size);
+
+      // Draw Player HP Bar directly above head
+      const maxHp = getMaxHp();
+      const hpRatio = player.hp / maxHp;
+      ctx.fillStyle = "#45475a";
+      ctx.fillRect(player.x - 4, player.y - 8, player.size + 8, 5);
+      ctx.fillStyle = hpRatio <= 0.35 ? "#f38ba8" : "#a6e3a1";
+      ctx.fillRect(player.x - 4, player.y - 8, (player.size + 8) * hpRatio, 5);
 
       // Draw Enemy
       if (enemy.alive) {
         ctx.fillStyle = "#f38ba8";
         ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
 
-        ctx.fillStyle = "#45475
+        ctx.fillStyle = "#45475a";
+        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size, 5);
+        ctx.fillStyle = "#fab387";
+        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size * (enemy.hp / enemy.maxHp), 5);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    updateUI();
+    gameLoop();
+  </script>
+</body>
+</html>
