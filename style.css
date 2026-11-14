@@ -18,7 +18,7 @@ body {
   width: 100%;
   max-width: 600px;
   background-color: #313244;
-  padding: 8px 12px;
+  padding: 7px 12px;
   box-sizing: border-box;
   border-radius: 8px 8px 0 0;
   display: flex;
@@ -29,15 +29,30 @@ body {
   border-bottom: none;
 }
 
+#inv-bar {
+  width: 100%;
+  max-width: 600px;
+  background-color: #2b2c3d;
+  padding: 5px 12px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-around;
+  font-size: 11px;
+  font-weight: bold;
+  color: #a6e3a1;
+  border-left: 2px solid #45475a;
+  border-right: 2px solid #45475a;
+}
+
 #stats-bar {
   width: 100%;
   max-width: 600px;
   background-color: #252533;
-  padding: 6px 10px;
+  padding: 5px 10px;
   box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 3px;
   font-size: 11px;
   color: #b4befe;
   border-left: 2px solid #45475a;
@@ -49,7 +64,7 @@ body {
   width: 100%;
   max-width: 600px;
   background-color: #45475a;
-  padding: 6px;
+  padding: 5px;
   box-sizing: border-box;
   border-left: 2px solid #45475a;
   border-right: 2px solid #45475a;
@@ -60,7 +75,7 @@ body {
   background-color: #a6e3a1;
   color: #11111b;
   width: 100%;
-  padding: 8px;
+  padding: 7px;
   font-size: 12px;
   font-weight: bold;
   border: none;
@@ -74,7 +89,7 @@ canvas {
   display: block;
   width: 100%;
   max-width: 600px;
-  height: 300px;
+  height: 290px;
   touch-action: none;
 }
 
@@ -121,6 +136,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
+#kitchen-btn { background-color: #89dceb; }
 #shop-btn { background-color: #f9e2af; }
 #char-btn { background-color: #cba6f7; }
 #heal-btn { background-color: #a6e3a1; }
@@ -167,10 +183,41 @@ button:disabled {
 
 .button-group {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  align-items: center;
 }
 
-#attack-btn { background-color: #f38ba8; color: #11111b; width: 85px; height: 85px; border-radius: 50%; font-size: 12px; }
+.action-circle-btn {
+  border-radius: 50%;
+  border: none;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  touch-action: manipulation;
+}
+
+.action-circle-btn:active {
+  transform: scale(0.93);
+}
+
+#grab-btn {
+  background-color: #a6e3a1;
+  color: #11111b;
+  width: 68px;
+  height: 68px;
+  font-size: 11px;
+}
+
+#attack-btn {
+  background-color: #f38ba8;
+  color: #11111b;
+  width: 82px;
+  height: 82px;
+  font-size: 12px;
+}
 
 #log {
   width: 100%;
@@ -211,8 +258,10 @@ button:disabled {
 }
 
 .modal-purple { border-color: #cba6f7; }
+.modal-blue { border-color: #89dceb; }
 .modal-title-gold { color: #f9e2af; margin-top: 0; text-align: center; }
 .modal-title-purple { color: #cba6f7; margin-top: 0; text-align: center; }
+.modal-title-blue { color: #89dceb; margin-top: 0; text-align: center; }
 
 .shop-item {
   display: flex;
@@ -225,6 +274,6 @@ button:disabled {
   font-size: 11px;
 }
 
-.shop-item button { max-width: 70px; margin-left: 8px; }
+.shop-item button { max-width: 75px; margin-left: 8px; }
 .stat-desc { background-color: #181825; padding: 8px; margin: 6px 0; border-radius: 6px; font-size: 11px; line-height: 1.4; }
 .close-btn { background-color: #f38ba8; margin-top: 10px; width: 100%; padding: 10px; }
