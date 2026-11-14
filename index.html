@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook</title>
+  <title>RPGHuntCook - Town & Hunt</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,16 +26,24 @@
     <span id="disp-cha">✨ CHA: 10</span>
   </div>
 
-  <!-- GAME SCREEN -->
-  <canvas id="gameCanvas" width="600" height="340"></canvas>
+  <!-- MAP / ZONE SWITCHER BAR -->
+  <div id="map-bar">
+    <button id="map-toggle-btn" onclick="switchMap()">🌲 Go to Hunting Grounds</button>
+  </div>
 
-  <!-- KITCHEN & MENU CONTROLS -->
+  <!-- GAME SCREEN -->
+  <canvas id="gameCanvas" width="600" height="300"></canvas>
+
+  <!-- DYNAMIC ACTION PANEL (CHANGES BASED ON TOWN OR HUNTING MAP) -->
   <div id="action-panel">
-    <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
-    <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
-    <button id="sell-btn" onclick="sellDish()" disabled>Sell Dish</button>
-    <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
-    <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
+    <!-- TOWN CONTROLS (Default) -->
+    <div id="town-controls" class="action-group">
+      <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
+      <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
+      <button id="sell-btn" onclick="sellDish()" disabled>Sell Dish</button>
+      <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
+      <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
+    </div>
   </div>
 
   <!-- SAVE / LOAD BAR -->
@@ -44,17 +52,16 @@
     <button id="reset-btn" onclick="resetGame()">🔄 NEW GAME</button>
   </div>
 
-  <!-- MOBILE VIRTUAL CONTROLS -->
+  <!-- MOBILE VIRTUAL CONTROLS (ONLY ACTIVE IN HUNTING GROUNDS) -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div class="button-group">
-      <button class="action-circle-btn" id="dodge-btn" onclick="triggerDodge()">🏃‍♂️ DODGE</button>
       <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ ATTACK</button>
     </div>
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Watch for the Slime's ⚠️ yellow warning before it strikes, then tap 🏃‍♂️ DODGE!</div>
+  <div id="log">Welcome to Town! Visit the Shop or Kitchen, then switch to the Hunting Grounds to find monsters.</div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
@@ -65,7 +72,7 @@
         <button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button>
       </div>
       <div class="shop-item">
-        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Speed & Passive Dodge</small></span>
+        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Speed & Auto-Dodge Chance</small></span>
         <button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button>
       </div>
       <div class="shop-item">
