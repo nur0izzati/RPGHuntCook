@@ -26,23 +26,20 @@ const DEFAULT_PLAYER = {
   int: 10,
   wis: 10,
   cha: 10,
-  inventory: [] // Stores gacha clothes, accessories, and gifts
+  inventory: []
 };
 
 let player = { ...DEFAULT_PLAYER };
 
-// NPCs with Personality, Traits & Party Status
+// NPCs with Personality & Traits
 let npcs = [
-  { id: 1, name: "Chef Remy", x: 80, y: 100, size: 28, color: "#89dceb", trait: "Aggressive Cook (Attacks enemies fiercely)", personality: "Passionate & strict about culinary art.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Steak" },
-  { id: 2, name: "Aria the Ranger", x: 450, y: 100, size: 28, color: "#a6e3a1", trait: "Forager (Helps gather double herbs)", personality: "Brave hunter who loves wild forest ingredients.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Herb" },
-  { id: 3, name: "Merchant Leon", x: 270, y: 200, size: 28, color: "#f9e2af", trait: "Scavenger (Finds extra gold after fights)", personality: "Cunny trader always looking for rare monster parts.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Gold" }
+  { id: 1, name: "Chef Remy", x: 80, y: 100, size: 28, color: "#89dceb", trait: "Aggressive Cook", personality: "Passionate & strict about culinary art.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Steak" },
+  { id: 2, name: "Aria the Ranger", x: 450, y: 100, size: 28, color: "#a6e3a1", trait: "Forager", personality: "Brave hunter who loves wild forest ingredients.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Herb" },
+  { id: 3, name: "Merchant Leon", x: 270, y: 200, size: 28, color: "#f9e2af", trait: "Scavenger", personality: "Cunny trader looking for rare monster parts.", hearts: 0, inParty: false, talkedToday: false, giftPref: "Gold" }
 ];
 
-// Roaming Monsters in the Forest
 let enemies = [
-  { name: "Roaming Slime", color: "#f38ba8", x: 420, y: 120, size: 30, hp: 25, maxHp: 25, atk: 12, dropType: "meat", alive: true, state: "patrol", dirX: 1, dirY: 0, moveTimer: 0, windupTimer: 0, maxWindup: 50 },
-  { name: "Forest Goblin", color: "#a6e3a1", x: 150, y: 200, size: 32, hp: 45, maxHp: 45, atk: 18, dropType: "meat", alive: true, state: "patrol", dirX: -1, dirY: 1, moveTimer: 0, windupTimer: 0, maxWindup: 45 },
-  { name: "Orc Warlord", color: "#fab387", x: 300, y: 60, size: 40, hp: 85, maxHp: 85, atk: 25, dropType: "prime", alive: true, state: "patrol", dirX: 0, dirY: -1, moveTimer: 0, windupTimer: 0, maxWindup: 60 }
+  { name: "Easy Slime", color: "#a6e3a1", x: 420, y: 120, size: 28, hp: 15, maxHp: 15, atk: 5, dropType: "meat", alive: true, state: "patrol", dirX: 1, dirY: 0, moveTimer: 0, windupTimer: 0, maxWindup: 70 }
 ];
 
 let wildItems = [];
@@ -64,31 +61,49 @@ function spawnWildItems() {
   ];
 }
 
-// --- INN SLEEP SYSTEM ---
+// --- INN SLEEP SYSTEM (FREE days 1-3, then scales) ---
 function sleepAtInn() {
-  const cost = 20;
+  const cost = dayCount <= 3 ? 0 : (dayCount - 3) * 10;
   if (player.gold < cost) {
-    showAlert("Inn costs 20 Gold to stay overnight!", "danger");
+    showAlert(`Inn costs ${cost} Gold tonight!`, "danger");
     return;
   }
   player.gold -= cost;
   dayCount++;
-  player.hp = getMaxHp(); // Fully restore HP!
+  player.hp = getMaxHp(); // Fully restores HP!
   
-  // Reset daily NPC states
   npcs.forEach(n => { n.talkedToday = false; });
-
-  showAlert(`☀️ Day ${dayCount} has begun! Slept at the Inn & fully restored HP!`, "success");
+  showAlert(`☀️ Day ${dayCount}! Slept at the Inn (${cost === 0 ? "FREE" : cost + " 🪙"}) & fully restored HP!`, "success");
   updateUI();
 }
 
-// --- MAP SWITCHER (TOWN SAFE ZONE vs FOREST) ---
+// --- MAP SWITCHER WITH DIFFICULTY CHOICE ---
 function switchMap() {
   if (currentMap === "town") {
+    let choice = prompt("Choose Forest Difficulty:\n1. Easy (Slimes - Weak, Easy Meat)\n2. Medium (Goblins - Balanced)\n3. Hard (Orc Bosses - Tough, High Rewards)\nEnter 1, 2, or 3:", "1");
+    if (!choice) return;
+
     currentMap = "hunt";
     document.getElementById("map-toggle-btn").textContent = "🏠 Flee to Town (Safe Zone)";
     document.getElementById("map-toggle-btn").style.backgroundColor = "#f9e2af";
-    showAlert("Entered Forest! Monsters are roaming. Run back to Town if you get low on HP!", "danger");
+
+    if (choice === "1") {
+      enemies = [
+        { name: "Easy Slime", color: "#a6e3a1", x: 420, y: 120, size: 28, hp: 15, maxHp: 15, atk: 5, dropType: "meat", alive: true, state: "patrol", dirX: 1, dirY: 0, moveTimer: 0, windupTimer: 0, maxWindup: 70 }
+      ];
+      showAlert("Entered EASY Forest! Monsters are weak.", "success");
+    } else if (choice === "3") {
+      enemies = [
+        { name: "Hard Orc Warlord", color: "#f38ba8", x: 300, y: 60, size: 42, hp: 120, maxHp: 120, atk: 35, dropType: "prime", alive: true, state: "patrol", dirX: 0, dirY: -1, moveTimer: 0, windupTimer: 0, maxWindup: 35 }
+      ];
+      showAlert("Entered HARD Forest! Dangerous boss monsters!", "danger");
+    } else {
+      enemies = [
+        { name: "Medium Goblin", color: "#fab387", x: 150, y: 200, size: 32, hp: 45, maxHp: 45, atk: 18, dropType: "meat", alive: true, state: "patrol", dirX: -1, dirY: 1, moveTimer: 0, windupTimer: 0, maxWindup: 50 }
+      ];
+      showAlert("Entered MEDIUM Forest. Standard hunt.", "info");
+    }
+
     player.x = 60; player.y = 120;
     spawnWildItems();
   } else {
@@ -115,27 +130,23 @@ function pullGacha() {
   let rarity = "";
 
   if (roll < 60) {
-    // Common (60%)
     rarity = "Common ⚪";
     const items = ["Silk Ribbon", "Bronze Ring", "Wild Berries", "Cloth Handkerchief"];
     rewardName = items[Math.floor(Math.random() * items.length)];
     player.rawMeat = Math.min(99, player.rawMeat + 2);
   } else if (roll < 85) {
-    // Rare (25%)
     rarity = "Rare 🔵";
     const items = ["Silver Necklace", "Ranger Cape", "Sturdy Boots", "Mana Tome (+1 INT)"];
     rewardName = items[Math.floor(Math.random() * items.length)];
     if (rewardName.includes("INT")) player.int += 1;
     else player.herbs = Math.min(99, player.herbs + 3);
   } else if (roll < 97) {
-    // Epic (12%)
     rarity = "Epic 🟣";
     const items = ["Gold Crown", "Knight's Gauntlets", "Warrior Tome (+2 STR)"];
     rewardName = items[Math.floor(Math.random() * items.length)];
     if (rewardName.includes("STR")) player.str += 2;
     else player.gold += 80;
   } else {
-    // Legendary (3%)
     rarity = "Legendary 🟡";
     const items = ["Celestial Diadem", "Dragon Scale Cloak", "Godly Tome (+3 All Stats)"];
     rewardName = items[Math.floor(Math.random() * items.length)];
@@ -150,7 +161,7 @@ function pullGacha() {
   updateUI();
 }
 
-// --- INTERACTIVE DIALOGUE & DATING SYSTEM ---
+// --- UNIQUE NPC DIALOGUE & DATING SYSTEM ---
 let activeDlgNpc = null;
 
 function openDialogue(npcId) {
@@ -159,12 +170,18 @@ function openDialogue(npcId) {
   activeDlgNpc = npc;
 
   document.getElementById("dlg-npc-name").textContent = `Chatting with ${npc.name}`;
-  document.getElementById("dlg-text").textContent = `"${npc.personality}"`;
+  
+  let intro = "";
+  if (npc.id === 1) intro = "Chef Remy: 'Hmph. Are you here to inspect my kitchen, or do you actually know good food?'";
+  else if (npc.id === 2) intro = "Aria: 'The forest whispers of danger today... Have you brought any rare herbs?'";
+  else intro = "Leon: 'Gold makes the world go round, traveler. Got any rare items to trade?'";
+
+  document.getElementById("dlg-text").textContent = intro;
 
   let choicesHtml = `
-    <button onclick="answerDialogue('nice')">"You look amazing today!" (+Affection)</button>
-    <button onclick="answerDialogue('combat')">"Teach me your battle secrets!" (+Party Interest)</button>
-    <button onclick="answerDialogue('rude')">"You're standing in my way." (-Affection)</button>
+    <button onclick="answerDialogue('compliment')">Compliment their craft (+Affection)</button>
+    <button onclick="answerDialogue('quest')">Ask about local rumors</button>
+    <button onclick="answerDialogue('tease')">Tease them playfully</button>
   `;
   document.getElementById("dlg-choices").innerHTML = choicesHtml;
   openModal('dialogue-modal');
@@ -174,18 +191,18 @@ function answerDialogue(type) {
   if (!activeDlgNpc) return;
   const npc = activeDlgNpc;
 
-  if (type === 'nice') {
+  if (type === 'compliment') {
     npc.hearts = Math.min(10, npc.hearts + 1);
-    showAlert(`💖 ${npc.name} smiles warmly. Affection increased!`, "success");
-    document.getElementById("dlg-text").textContent = `"${npc.name}: Oh, thank you! That made my day."`;
-  } else if (type === 'combat') {
+    showAlert(`💖 ${npc.name} appreciated your kind words! (+1 ❤️)`, "success");
+    document.getElementById("dlg-text").textContent = `"${npc.name}: Well... that's very sweet of you to notice."`;
+  } else if (type === 'quest') {
     npc.hearts = Math.min(10, npc.hearts + 1);
-    showAlert(`⚔️ ${npc.name} respects your dedication!`, "success");
-    document.getElementById("dlg-text").textContent = `"${npc.name}: Ah, a fellow adventurer! I like your ambition."`;
+    showAlert(`🗺️ ${npc.name} shared a helpful tip! (+1 ❤️)`, "success");
+    document.getElementById("dlg-text").textContent = `"${npc.name}: Keep your eyes open for wild mushrooms near the thicket."`;
   } else {
     npc.hearts = Math.max(0, npc.hearts - 1);
-    showAlert(`💢 ${npc.name} frowns at your remark.`, "danger");
-    document.getElementById("dlg-text").textContent = `"${npc.name}: Watch your tone, traveler."`;
+    showAlert(`💢 ${npc.name} didn't like that joke. (-1 ❤️)`, "danger");
+    document.getElementById("dlg-text").textContent = `"${npc.name}: Hah. Very funny. Not."`;
   }
   updateUI();
 }
@@ -199,11 +216,11 @@ function toggleParty(npcId) {
     showAlert(`${npc.name} left your party.`, "info");
   } else {
     if (npc.hearts < 3) {
-      showAlert(`You need at least 3 ❤️ Hearts of affection to invite ${npc.name} into your party!`, "danger");
+      showAlert(`You need at least 3 ❤️ Hearts of affection to invite ${npc.name}!`, "danger");
       return;
     }
     npc.inParty = true;
-    showAlert(`🤝 ${npc.name} joined your party! They will roam and fight alongside you.`, "success");
+    showAlert(`🤝 ${npc.name} joined your party!`, "success");
   }
   updateUI();
   openModal('npc-modal');
@@ -216,7 +233,7 @@ function giftItemToNpc(npcId, itemIndex) {
 
   player.inventory.splice(itemIndex, 1);
   npc.hearts = Math.min(10, npc.hearts + 3);
-  showAlert(`🎁 Gifted ${item.name} to ${npc.name}! They loved it (+3 ❤️)!`, "success");
+  showAlert(`🎁 Gifted ${item.name} to ${npc.name}! (+3 ❤️)`, "success");
   updateUI();
   openModal('npc-modal');
 }
@@ -228,15 +245,7 @@ function getMoveSpeed() { return 3 + (player.dex * 0.1); }
 function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); }
 function getUpgradeCost() { return Math.max(5, 20 - Math.floor((player.cha - 10) * 1.5)); }
 
-// --- CONTROLS ---
-const keys = {};
-window.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-  if (e.key === " " && currentMap === "hunt") triggerAttack();
-  if (e.key.toLowerCase() === "e") triggerMainAction();
-});
-window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
-
+// --- MOBILE TOUCH JOYSTICK CONTROLS ---
 let activePointerId = null;
 let joystickMoveX = 0;
 let joystickMoveY = 0;
@@ -351,7 +360,6 @@ function updateUI() {
   document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
   document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
 
-  // Render NPC Modal with party invitation & gifting
   let npcHtml = "";
   npcs.forEach(n => {
     let giftsOptions = "";
@@ -373,7 +381,6 @@ function updateUI() {
   });
   document.getElementById("npc-list-container").innerHTML = npcHtml;
 
-  // Inventory Wardrobe display
   let wardrobeHtml = "<strong>🎒 Gacha Wardrobe & Collectibles:</strong><br>";
   if (player.inventory.length === 0) wardrobeHtml += "<small>Empty! Pull gacha items to gift NPCs.</small>";
   else player.inventory.forEach(i => { wardrobeHtml += `- ${i.name} (${i.rarity})<br>`; });
@@ -385,7 +392,7 @@ function updateUI() {
   });
 }
 
-// --- COMBAT & PATROLLING MONSTERS ---
+// --- COMBAT & MONSTER ATTACK FIX ---
 function triggerAttack() {
   if (currentMap !== "hunt" || player.hp <= 0) return;
 
@@ -411,10 +418,9 @@ function triggerAttack() {
         player.rawMeat = Math.min(99, player.rawMeat + gained);
         showAlert(`⚔️ Defeated ${closest.name}! Got ${gained}x Meat!`, "success");
       }
-      // Party member scavenger trait bonus
       if (npcs.some(n => n.inParty && n.trait.includes("Scavenger"))) {
         player.gold += 15;
-        showAlert("💰 Leon scavenged 15 bonus Gold from the defeated foe!", "success");
+        showAlert("💰 Leon scavenged 15 bonus Gold!", "success");
       }
       updateUI();
       setTimeout(() => { closest.hp = closest.maxHp; closest.alive = true; closest.x = Math.random()*400+50; closest.y = Math.random()*200+40; }, 4000);
@@ -450,54 +456,54 @@ function update() {
   let moveX = joystickMoveX;
   let moveY = joystickMoveY;
 
-  if (keys["w"] || keys["arrowup"]) moveY = -1;
-  if (keys["s"] || keys["arrowdown"]) moveY = 1;
-  if (keys["a"] || keys["arrowleft"]) moveX = -1;
-  if (keys["d"] || keys["arrowright"]) moveX = 1;
-
-  const spd = getMoveSpeed();
   if (moveX !== 0 || moveY !== 0) {
-    player.x += moveX * spd;
-    player.y += moveY * spd;
+    player.x += moveX * getMoveSpeed();
+    player.y += moveY * getMoveSpeed();
   }
 
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(20, Math.min(canvas.height - player.size, player.y));
 
-  // Party members autonomous wandering in town or following in hunt
   npcs.forEach(n => {
     if (n.inParty && currentMap === "hunt") {
-      // Follow player loosely
       if (n.x < player.x) n.x += 1.2; else if (n.x > player.x) n.x -= 1.2;
       if (n.y < player.y) n.y += 1.2; else if (n.y > player.y) n.y -= 1.2;
     }
   });
 
-  // Roaming & Chasing Monster AI
   if (currentMap === "hunt") {
     enemies.forEach(e => {
       if (e.alive) {
         const dist = Math.sqrt(Math.pow((player.x+14)-(e.x+17), 2) + Math.pow((player.y+14)-(e.y+17), 2));
 
-        if (dist < 120) {
-          // Chase player!
-          if (e.x < player.x) e.x += 1.5; else e.x -= 1.5;
-          if (e.y < player.y) e.y += 1.5; else e.y -= 1.5;
-
-          if (dist < 50) {
-            // Attack player
-            if (Math.random() * 100 < getDodgeChance()) {
-              showAlert(`⚡ Auto-dodged the roaming ${e.name}!`, "success");
-            } else {
-              const taken = Math.max(1, e.atk - 2);
-              player.hp = Math.max(0, player.hp - taken);
-              showAlert(`💥 ${e.name} ambushed and hit you for ${taken} DMG! Flee to Town!`, "danger");
-              if (player.hp === 0) showAlert("💀 You fainted! Visit the Inn or reset.", "danger");
-            }
-            updateUI();
+        if (dist < 130) {
+          if (e.state === "patrol") {
+            e.state = "windup";
+            e.windupTimer = e.maxWindup;
+            showAlert(`⚠️ ${e.name} spots you and winds up an attack!`, "danger");
           }
+
+          if (e.state === "windup") {
+            e.windupTimer--;
+            if (e.windupTimer <= 0) {
+              e.state = "patrol";
+              if (dist < 65) {
+                if (Math.random() * 100 < getDodgeChance()) {
+                  showAlert(`⚡ Auto-dodged the ${e.name}'s strike!`, "success");
+                } else {
+                  const taken = Math.max(1, e.atk - (Math.floor((player.con - 10) / 2)));
+                  player.hp = Math.max(0, player.hp - taken);
+                  showAlert(`💥 ${e.name} struck you for ${taken} DMG!`, "danger");
+                }
+                updateUI();
+              }
+            }
+          }
+
+          if (e.x < player.x) e.x += 0.8; else e.x -= 0.8;
+          if (e.y < player.y) e.y += 0.8; else e.y -= 0.8;
         } else {
-          // Patrol randomly
+          e.state = "patrol";
           e.moveTimer++;
           if (e.moveTimer > 80) {
             e.dirX = (Math.random() - 0.5) * 2;
@@ -518,12 +524,10 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (currentMap === "town") {
-    // Draw Town Buildings & Inn
     ctx.fillStyle = "#fab387";
     ctx.fillRect(40, 50, 140, 100);
     ctx.fillStyle = "#11111b"; ctx.font="12px sans-serif"; ctx.textAlign="center"; ctx.fillText("🛌 INN (Sleep)", 110, 105);
 
-    // Draw Town NPCs
     npcs.forEach(n => {
       ctx.fillStyle = n.color;
       ctx.fillRect(n.x, n.y, n.size, n.size);
@@ -531,11 +535,9 @@ function draw() {
       ctx.fillText(`${n.name} (❤️${n.hearts})`, n.x + n.size/2, n.y - 6);
     });
 
-    // Hero
     ctx.fillStyle = "#89b4fa";
     ctx.fillRect(player.x, player.y, player.size, player.size);
   } else {
-    // Forest hunting grounds
     wildItems.forEach(i => {
       if (i.active) {
         ctx.fillStyle = i.color;
@@ -544,7 +546,6 @@ function draw() {
       }
     });
 
-    // Roaming Monsters
     enemies.forEach(e => {
       if (e.alive) {
         ctx.fillStyle = e.color;
@@ -554,7 +555,6 @@ function draw() {
       }
     });
 
-    // Party Members in Hunt
     npcs.forEach(n => {
       if (n.inParty) {
         ctx.fillStyle = n.color;
@@ -562,7 +562,6 @@ function draw() {
       }
     });
 
-    // Hero
     ctx.fillStyle = "#89b4fa";
     ctx.fillRect(player.x, player.y, player.size, player.size);
     const maxHp = getMaxHp();
@@ -582,4 +581,3 @@ function gameLoop() {
 loadGame();
 updateUI();
 gameLoop();
-        
