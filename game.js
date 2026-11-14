@@ -61,17 +61,41 @@ function advanceTime() {
   if (timeOfDay === "Morning") timeOfDay = "Afternoon";
   else if (timeOfDay === "Afternoon") timeOfDay = "Evening";
   else if (timeOfDay === "Evening") timeOfDay = "Night";
-  else { timeOfDay = "Morning"; dayCount++; if (typeof npcs !== 'undefined') npcs.forEach(n => { n.talkedToday = false; }); }
+  else {
+    timeOfDay = "Morning";
+    dayCount++;
+    if (typeof npcs !== 'undefined') {
+      npcs.forEach(n => { n.talkedToday = false; n.giftGivenToday = false; });
+    }
+  }
 }
 
-// --- CHEAT CODE ---
-function activateCheatCode() {
-  player.gold = 99999;
-  showAlert("⚡ CHEAT ACTIVATED: Infinity Gold Unlocked (99,999 🪙)!", "success");
+// --- CHEAT CODE & REWARD CODE REDEMPTION SYSTEM ---
+function openCheatPrompt() {
+  let code = prompt("Enter Reward / Cheat Code:\n\nAvailable Cheats:\n- 'INFINITYGOLD' (99,999 Gold)\n- 'FREEGACHA' (10 Free Pull Items)\n- 'MAXSTATS' (All Stats +20)", "");
+  if (!code) return;
+  code = code.trim().toUpperCase();
+
+  if (code === "INFINITYGOLD") {
+    player.gold = 99999;
+    showAlert("⚡ CHEAT: Infinity Gold Unlocked!", "success");
+  } else if (code === "FREEGACHA") {
+    for (let i = 0; i < 5; i++) {
+      player.inventory.push({ name: "Promo Gemstone", rarity: "Epic 🟣" });
+    }
+    showAlert("⚡ CHEAT: Added 5 Promo Gacha Items!", "success");
+  } else if (code === "MAXSTATS") {
+    player.str += 20; player.dex += 20; player.con += 20;
+    player.int += 20; player.wis += 20; player.cha += 20;
+    player.hp = getMaxHp();
+    showAlert("⚡ CHEAT: All stats maxed out +20!", "success");
+  } else {
+    showAlert("❌ Invalid Cheat Code!", "danger");
+  }
   updateUI();
 }
 
-// --- FOREST DIFFICULTY SELECTION MODAL ---
+// --- FOREST DIFFICULTY MODAL ---
 function promptForestDifficulty() {
   openModal('forest-modal');
 }
@@ -212,12 +236,12 @@ function cookRecipe(type) {
 }
 
 function saveGame() {
-  localStorage.setItem("RPGHuntCook_Save_v8", JSON.stringify({ player, npcs: typeof npcs !== 'undefined' ? npcs : [], dayCount, timeOfDay, activeQuests }));
+  localStorage.setItem("RPGHuntCook_Save_v9", JSON.stringify({ player, npcs: typeof npcs !== 'undefined' ? npcs : [], dayCount, timeOfDay, activeQuests }));
   showAlert("💾 Game Saved!", "success");
 }
 
 function loadGame() {
-  const saved = localStorage.getItem("RPGHuntCook_Save_v8");
+  const saved = localStorage.getItem("RPGHuntCook_Save_v9");
   if (saved) {
     const data = JSON.parse(saved);
     player = { ...DEFAULT_PLAYER, ...data.player };
@@ -231,7 +255,7 @@ function loadGame() {
 
 function resetGame() {
   if (confirm("Reset all progress?")) {
-    localStorage.removeItem("RPGHuntCook_Save_v8");
+    localStorage.removeItem("RPGHuntCook_Save_v9");
     player = { ...DEFAULT_PLAYER };
     dayCount = 1; timeOfDay = "Morning";
     if (currentMap === "hunt") switchMap();
@@ -250,7 +274,6 @@ function updateUI() {
   document.getElementById("inv-herb").textContent = `🌿: ${player.herbs}/99`;
   document.getElementById("inv-shroom").textContent = `🍄: ${player.mushrooms}/99`;
 
-  // Kitchen ingredient counts
   const skewerEl = document.getElementById("recipe-skewer");
   if (skewerEl) skewerEl.innerHTML = `<strong>🍖 Skewer</strong><br><small>1 🥩 (Have: ${player.rawMeat})</small> <button onclick="cookRecipe('skewer')">Cook</button>`;
   
@@ -260,7 +283,6 @@ function updateUI() {
   const saladEl = document.getElementById("recipe-salad");
   if (saladEl) saladEl.innerHTML = `<strong>🌿 Salad</strong><br><small>2 🌿+1 🍄 (Herb:${player.herbs}, Shroom:${player.mushrooms})</small> <button onclick="cookRecipe('salad')">Cook</button>`;
 
-  // Sell & Eat Inventory HTML
   const sellContainer = document.getElementById("sell-inventory-container");
   if (sellContainer) {
     sellContainer.innerHTML = `
@@ -342,3 +364,4 @@ function gameLoop() {
 }
 
 loadGame(); updateUI(); gameLoop();
+      
