@@ -37,7 +37,7 @@ let enemy = {
   cooldownTimer: 0
 };
 
-// --- MAP SWITCHER ---
+// --- SWITCH MAPS (TOWN vs HUNTING GROUNDS) ---
 function switchMap() {
   if (currentMap === "town") {
     currentMap = "hunt";
@@ -45,21 +45,20 @@ function switchMap() {
     document.getElementById("map-toggle-btn").style.backgroundColor = "#f9e2af";
     document.getElementById("mobile-controls").style.display = "flex";
     
-    // Change action panel to show quick return / status
     document.getElementById("action-panel").innerHTML = `
       <div style="text-align:center; font-size:12px; color: #f38ba8; font-weight:bold; padding:4px;">
-        🌲 HUNTING GROUNDS: Approach slime & tap ATTACK!
+        🌲 HUNTING GROUNDS: Approach the slime & tap ATTACK!
       </div>
     `;
-    logEl.textContent = "Entered the Hunting Grounds! Watch out for aggressive slimes.";
-    player.x = 80; player.y = 130;
+    logEl.textContent = "Entered the Hunting Grounds! Monsters roam here.";
+    player.x = 80; 
+    player.y = 130;
   } else {
     currentMap = "town";
-    document.getElementById("map-toggle-btn").textContent = "🌲 Go to Hunting Grounds";
+    document.getElementById("map-toggle-btn").textContent = "🌲 Travel to Hunting Grounds";
     document.getElementById("map-toggle-btn").style.backgroundColor = "#a6e3a1";
     document.getElementById("mobile-controls").style.display = "none";
 
-    // Restore Town Kitchen Panel
     document.getElementById("action-panel").innerHTML = `
       <div id="town-controls" class="action-group">
         <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
@@ -69,8 +68,9 @@ function switchMap() {
         <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
       </div>
     `;
-    logEl.textContent = "Returned safely to Town. Cook, sell, and upgrade your gear!";
-    player.x = 270; player.y = 130;
+    logEl.textContent = "Returned safely to Town. Visit the Kitchen and Shop!";
+    player.x = 270; 
+    player.y = 130;
     updateUI();
   }
 }
@@ -117,7 +117,7 @@ function resetGame() {
 function getAttackDmg() { return player.str; }
 function getMaxBagWeight() { return Math.floor(player.str / 2); }
 function getMoveSpeed() { return 3 + (player.dex * 0.1); }
-function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); } // Auto-dodge chance!
+function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); }
 function getMaxHp() { return 50 + (player.con * 5); }
 function getDamageReduction() { return Math.floor((player.con - 10) / 2); }
 function getDishSellPrice() { return 10 + Math.floor(player.int * 0.8) + Math.floor(player.cha * 0.5); }
@@ -367,7 +367,6 @@ function update() {
         enemy.cooldownTimer = 60;
 
         if (dist < 75) {
-          // AUTO-DODGE CHECK VIA DEXTERITY
           const autoDodged = (Math.random() * 100) < getDodgeChance();
 
           if (autoDodged) {
@@ -389,23 +388,57 @@ function update() {
   }
 }
 
+// --- RENDER MAPS & GRAPHICS ---
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (currentMap === "town") {
-    // Draw Town Background Visuals (Simple safe zone indicators)
+    // --- DRAW TOWN VISUALS ---
+    // Kitchen Building (Left)
     ctx.fillStyle = "#313244";
-    ctx.fillRect(50, 50, 140, 100);
+    ctx.fillRect(40, 60, 180, 140);
+    ctx.strokeStyle = "#89b4fa";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(40, 60, 180, 140);
+    
     ctx.fillStyle = "#f9e2af";
-    ctx.font = "bold 14px sans-serif";
+    ctx.font = "bold 13px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("🏠 TOWN KITCHEN & SHOP", 120, 105);
+    ctx.fillText("🏠 TOWN KITCHEN", 130, 95);
+    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "#cdd6f4";
+    ctx.fillText("(Cook & Eat Stew Here)", 130, 115);
+
+    // Shop Building (Right)
+    ctx.fillStyle = "#313244";
+    ctx.fillRect(380, 60, 180, 140);
+    ctx.strokeStyle = "#f9e2af";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(380, 60, 180, 140);
+
+    ctx.fillStyle = "#f9e2af";
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillText("🛒 VILLAGE SHOP", 470, 95);
+    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "#cdd6f4";
+    ctx.fillText("(Sell Food & Buy Stats)", 470, 115);
 
     // Draw Player in Town
     ctx.fillStyle = "#89b4fa";
     ctx.fillRect(player.x, player.y, player.size, player.size);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "10px sans-serif";
+    ctx.fillText("Hero", player.x + player.size/2, player.y - 6);
+
   } else {
-    // Draw Hunting Grounds
+    // --- DRAW HUNTING GROUNDS VISUALS ---
+    // Forest background accent lines
+    ctx.strokeStyle = "#24273a";
+    ctx.lineWidth = 1;
+    for(let i=50; i<canvas.width; i+=100) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+    }
+
     if (enemy.state === "windup") {
       ctx.beginPath();
       ctx.arc(enemy.x + enemy.size / 2, enemy.y + enemy.size / 2, 75, 0, Math.PI * 2);
@@ -469,4 +502,3 @@ document.getElementById("mobile-controls").style.display = "none";
 loadGame();
 updateUI();
 gameLoop();
-      
