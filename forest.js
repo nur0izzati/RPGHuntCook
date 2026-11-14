@@ -33,6 +33,7 @@ function collectWildItems() {
 
 function triggerAttack() {
   if (currentMap !== "hunt" || player.hp <= 0) return;
+  if (typeof playSound === 'function') playSound('heroAttack');
 
   let closest = null, minDist = 9999;
   enemies.forEach(e => {
@@ -77,19 +78,17 @@ function updateForest() {
     n.x += (targetX - n.x) * 0.1;
     n.y += (targetY - n.y) * 0.1;
 
-    // Autonomous Foraging with Heart-Based Sharing Probability
     wildItems.forEach(item => {
       if (item.active && Math.sqrt(Math.pow((n.x+12)-(item.x+11), 2) + Math.pow((n.y+12)-(item.y+11), 2)) < 35) {
         item.active = false;
-        // High hearts = higher chance to give item to player (e.g. hearts * 8% chance, max 90%)
         let giveChance = Math.min(90, n.hearts * 8);
         let sharedWithPlayer = Math.random() * 100 < giveChance;
 
         if (sharedWithPlayer) {
           player.herbs = Math.min(99, player.herbs + 1);
-          showAlert(`🌿 ${n.name} foraged an herb and handed it to you (High Affection)!`, "success");
+          showAlert(`🌿 ${n.name} foraged an herb and handed it to you!`, "success");
         } else {
-          showAlert(`🌿 ${n.name} foraged an herb and kept it for themselves.`, "info");
+          showAlert(`🌿 ${n.name} foraged an herb and kept it.`, "info");
         }
 
         setTimeout(() => { item.active = true; item.x = Math.random() * 450 + 50; item.y = Math.random() * 200 + 40; }, 4000);
@@ -102,10 +101,9 @@ function updateForest() {
         if (e.hp <= 0) {
           e.alive = false;
           let giveChance = Math.min(90, n.hearts * 8);
-          let sharedWithPlayer = Math.random() * 100 < giveChance;
-          if (sharedWithPlayer) {
+          if (Math.random() * 100 < giveChance) {
             player.rawMeat++;
-            showAlert(`⚔️ ${n.name} defeated ${e.name} and shared the loot with you!`, "success");
+            showAlert(`⚔️ ${n.name} defeated ${e.name} and shared the loot!`, "success");
           } else {
             showAlert(`⚔️ ${n.name} defeated ${e.name} but kept the drop.`, "info");
           }
@@ -121,6 +119,7 @@ function updateForest() {
         if (e.state === "patrol") {
           e.state = "windup";
           e.windupTimer = e.maxWindup;
+          if (typeof playSound === 'function') playSound('monsterAttack');
           showAlert(`⚠️ ${e.name} spots you and winds up an attack!`, "danger");
         }
         if (e.state === "windup") {
@@ -133,6 +132,7 @@ function updateForest() {
               } else {
                 const taken = Math.max(1, e.atk - (Math.floor((player.con - 10) / 2)));
                 player.hp = Math.max(0, player.hp - taken);
+                if (typeof playSound === 'function') playSound('monsterAttack');
                 showAlert(`💥 ${e.name} struck you for ${taken} DMG!`, "danger");
               }
               updateUI();
