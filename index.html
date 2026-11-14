@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Town Explorer, Dating & Gacha</title>
+  <title>RPGHuntCook - Ultimate RPG</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- PROMINENT ON-SCREEN ALERT BANNER -->
+  <!-- ON-SCREEN ALERT BANNER -->
   <div id="alert-banner">Welcome to RPGHuntCook!</div>
 
-  <!-- TOP RESOURCE & HP BAR -->
+  <!-- TOP RESOURCE, DAY & HP BAR -->
   <div id="ui-bar">
-    <span id="stat-gold">🪙 0</span>
-    <span id="stat-rep">⭐ Rep: 0</span>
+    <span id="stat-day">☀️ Day 1</span>
+    <span id="stat-gold">🪙 100</span>
     <span id="stat-hp">HP: 100/100</span>
   </div>
 
@@ -47,113 +47,106 @@
   <!-- ACTION PANEL -->
   <div id="action-panel">
     <div id="town-controls" class="action-group">
-      <button id="kitchen-btn" onclick="openModal('kitchen-modal')">🍳 KITCHEN</button>
-      <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #fab387;">🗣️ NPCS</button>
-      <button id="gacha-btn" onclick="openModal('gacha-modal')" style="background-color: #f38ba8;">🎁 GACHA</button>
-      <button id="heal-btn" onclick="eatBestDish()" disabled>🍲 Eat</button>
-      <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
-      <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
+      <button id="inn-btn" onclick="sleepAtInn()" style="background-color: #fab387;">🛌 Inn (Sleep)</button>
+      <button id="kitchen-btn" onclick="openModal('kitchen-modal')">🍳 Kitchen</button>
+      <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #cba6f7;">🗣️ Town Square</button>
+      <button id="gacha-btn" onclick="openModal('gacha-modal')" style="background-color: #f38ba8;">🎁 Gacha</button>
+      <button id="shop-btn" onclick="openModal('shop-modal')">🛒 Shop</button>
+      <button id="char-btn" onclick="openModal('char-modal')">📜 Stats</button>
     </div>
   </div>
 
   <!-- SAVE / LOAD BAR -->
   <div id="save-panel">
-    <button id="save-btn" onclick="saveGame()">💾 SAVE GAME</button>
-    <button id="reset-btn" onclick="resetGame()">🔄 NEW GAME</button>
+    <button id="save-btn" onclick="saveGame()">💾 Save</button>
+    <button id="reset-btn" onclick="resetGame()">🔄 Reset</button>
   </div>
 
-  <!-- MOBILE VIRTUAL CONTROLS (Always active now for Town & Hunt exploration!) -->
+  <!-- MOBILE VIRTUAL CONTROLS -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div class="button-group">
-      <button class="action-circle-btn" id="action-btn" onclick="triggerMainAction()">⭐ ACT</button>
-      <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ FIGHT</button>
+      <button class="action-circle-btn" id="action-btn" onclick="triggerMainAction()">⭐ Act</button>
+      <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ Fight</button>
     </div>
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Explore the Town with the joystick! Walk up to buildings or NPCs and press ACT.</div>
+  <div id="log">Explore Town or sleep at the Inn to advance days and fully restore HP!</div>
 
-  <!-- GACHA BANNER MODAL -->
+  <!-- GACHA MODAL -->
   <div id="gacha-modal" class="modal">
     <div class="modal-content modal-pink">
-      <h3 class="modal-title-pink">🎁 Mystic Recipe & Stat Gacha</h3>
+      <h3 class="modal-title-pink">🎁 Rarity Gacha Banner</h3>
       <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
-        Spend 50 Gold to pull random rare ingredients, bonus gold, or permanent stat boosts!
+        Pull for Clothes, Accessories, Tomes, Ingredients & Gold!<br>
+        <small style="color:#a6e3a1;">(Common 60% | Rare 25% | Epic 12% | Legendary 3%)</small>
       </p>
-      <div id="gacha-result-box" style="background:#181825; padding:12px; border-radius:6px; text-align:center; margin:10px 0; min-height:40px; font-size:12px; color:#f9e2af;">
-        Tap pull below to try your luck!
+      <div id="gacha-result-box" style="background:#181825; padding:12px; border-radius:6px; text-align:center; margin:10px 0; min-height:45px; font-size:12px; color:#f9e2af;">
+        Tap pull below to test your luck!
       </div>
       <button onclick="pullGacha()" style="background-color: #f38ba8; color:#11111b; width:100%; padding:10px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">Pull Gacha (50 🪙)</button>
-      <button class="close-btn" onclick="closeModal('gacha-modal')">Close Gacha</button>
+      <button class="close-btn" onclick="closeModal('gacha-modal')">Close</button>
     </div>
   </div>
 
-  <!-- NPC DATING / TALK MODAL -->
+  <!-- NPC DIALOGUE & DATING MODAL -->
   <div id="npc-modal" class="modal">
     <div class="modal-content modal-orange">
-      <h3 class="modal-title-orange">🗣️ Town Square & Dating</h3>
-      <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
-        Talk daily, learn their personality, and gift dishes to increase hearts!
-      </p>
+      <h3 class="modal-title-orange">🗣️ Town Square & Party Invitations</h3>
       <div id="npc-list-container"></div>
-      <button class="close-btn" onclick="closeModal('npc-modal')">Close NPCs</button>
+      <button class="close-btn" onclick="closeModal('npc-modal')">Close</button>
+    </div>
+  </div>
+
+  <!-- DIALOGUE TREE MODAL -->
+  <div id="dialogue-modal" class="modal">
+    <div class="modal-content modal-purple">
+      <h3 id="dlg-npc-name" class="modal-title-purple">Chatting</h3>
+      <p id="dlg-text" style="background:#181825; padding:10px; border-radius:6px; font-size:12px; color:#cdd6f4;"></p>
+      <div id="dlg-choices" style="display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
+      <button class="close-btn" onclick="closeModal('dialogue-modal')">End Chat</button>
     </div>
   </div>
 
   <!-- KITCHEN MODAL -->
   <div id="kitchen-modal" class="modal">
     <div class="modal-content modal-blue">
-      <h3 class="modal-title-blue">🍳 Town Kitchen & Recipe Book</h3>
-      <div class="shop-item">
-        <span><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat</small></span>
-        <button onclick="cookRecipe('skewer')" id="cook-skewer">Cook</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 Meat + 1 🌿 Herb</small></span>
-        <button onclick="cookRecipe('steak')" id="cook-steak">Cook</button>
-      </div>
-      <div class="shop-item">
-        <span><strong>🍖 Prime Beast Feast</strong><br><small>1 🍖 Prime Meat + 1 🍄 Shroom</small></span>
-        <button onclick="cookRecipe('feast')" id="cook-feast">Cook</button>
-      </div>
-      <div class="shop-item" style="border-left: 3px solid #a6e3a1;">
-        <span><strong>🌿 Forest Herbal Salad (Meat-Free)</strong><br><small>2 🌿 Herb + 1 🍄 Shroom</small></span>
-        <button onclick="cookRecipe('salad')" id="cook-salad">Cook</button>
-      </div>
-      <div class="shop-item" style="border-left: 3px solid #a6e3a1;">
-        <span><strong>🍵 Mushroom Tonic (Meat-Free)</strong><br><small>2 🍄 Shroom + 1 🌿 Herb</small></span>
-        <button onclick="cookRecipe('tonic')" id="cook-tonic">Cook</button>
-      </div>
-      <button class="close-btn" onclick="closeModal('kitchen-modal')">Close Kitchen</button>
+      <h3 class="modal-title-blue">🍳 Kitchen & Recipes</h3>
+      <div class="shop-item"><span><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat</small></span><button onclick="cookRecipe('skewer')">Cook</button></div>
+      <div class="shop-item"><span><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 + 1 🌿</small></span><button onclick="cookRecipe('steak')">Cook</button></div>
+      <div class="shop-item"><span><strong>🍖 Beast Feast</strong><br><small>1 🍖 Prime + 1 🍄</small></span><button onclick="cookRecipe('feast')">Cook</button></div>
+      <div class="shop-item"><span><strong>🌿 Herbal Salad</strong><br><small>2 🌿 + 1 🍄</small></span><button onclick="cookRecipe('salad')">Cook</button></div>
+      <button class="close-btn" onclick="closeModal('kitchen-modal')">Close</button>
     </div>
   </div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
     <div class="modal-content">
-      <h3 class="modal-title-gold">🛒 Attribute Training Shop</h3>
-      <div class="shop-item"><span><strong>💪 Strength (+2 STR)</strong></span><button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button></div>
-      <div class="shop-item"><span><strong>⚡ Dexterity (+2 DEX)</strong></span><button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button></div>
-      <div class="shop-item"><span><strong>🛡️ Constitution (+2 CON)</strong></span><button onclick="buyUpgrade('con')" id="btn-con">20 🪙</button></div>
-      <div class="shop-item"><span><strong>🧠 Intelligence (+2 INT)</strong></span><button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button></div>
-      <div class="shop-item"><span><strong>👁️ Wisdom (+2 WIS)</strong></span><button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button></div>
-      <div class="shop-item"><span><strong>✨ Charisma (+2 CHA)</strong></span><button onclick="buyUpgrade('cha')" id="btn-cha">20 🪙</button></div>
-      <button class="close-btn" onclick="closeModal('shop-modal')">Close Shop</button>
+      <h3 class="modal-title-gold">🛒 Training Shop</h3>
+      <div class="shop-item"><span><strong>💪 Strength</strong></span><button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button></div>
+      <div class="shop-item"><span><strong>⚡ Dexterity</strong></span><button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button></div>
+      <div class="shop-item"><span><strong>🛡️ Constitution</strong></span><button onclick="buyUpgrade('con')" id="btn-con">20 🪙</button></div>
+      <div class="shop-item"><span><strong>🧠 Intelligence</strong></span><button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button></div>
+      <div class="shop-item"><span><strong>👁️ Wisdom</strong></span><button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button></div>
+      <div class="shop-item"><span><strong>✨ Charisma</strong></span><button onclick="buyUpgrade('cha')" id="btn-cha">20 🪙</button></div>
+      <button class="close-btn" onclick="closeModal('shop-modal')">Close</button>
     </div>
   </div>
 
-  <!-- CHARACTER SHEET MODAL -->
+  <!-- STATS MODAL -->
   <div id="char-modal" class="modal">
     <div class="modal-content modal-purple">
-      <h3 class="modal-title-purple">📜 Character Attributes</h3>
+      <h3 class="modal-title-purple">📜 Attributes & Inventory</h3>
       <div class="stat-desc" id="desc-str"></div>
       <div class="stat-desc" id="desc-dex"></div>
       <div class="stat-desc" id="desc-con"></div>
       <div class="stat-desc" id="desc-int"></div>
       <div class="stat-desc" id="desc-wis"></div>
       <div class="stat-desc" id="desc-cha"></div>
-      <button class="close-btn" onclick="closeModal('char-modal')">Close Sheet</button>
+      <div class="stat-desc" id="desc-wardrobe" style="border-color:#f38ba8;"></div>
+      <button class="close-btn" onclick="closeModal('char-modal')">Close</button>
     </div>
   </div>
 
