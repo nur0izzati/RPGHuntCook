@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Town & Hunt</title>
+  <title>RPGHuntCook - Foraging & Recipes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,9 +11,16 @@
   <!-- TOP RESOURCE & HP BAR -->
   <div id="ui-bar">
     <span id="stat-gold">🪙 0</span>
-    <span id="stat-meat">🥩 0/5</span>
-    <span id="stat-dish">🍖 0</span>
+    <span id="stat-bag">🎒 0/6</span>
+    <span id="stat-dish">🍽️ 0</span>
     <span id="stat-hp">HP: 100/100</span>
+  </div>
+
+  <!-- INGREDIENTS BAR -->
+  <div id="inv-bar">
+    <span id="inv-meat">🥩 Meat: 0</span>
+    <span id="inv-herb">🌿 Herb: 0</span>
+    <span id="inv-shroom">🍄 Shroom: 0</span>
   </div>
 
   <!-- 6-STAT RPG ATTRIBUTES BAR -->
@@ -34,12 +41,12 @@
   <!-- GAME SCREEN -->
   <canvas id="gameCanvas" width="600" height="300"></canvas>
 
-  <!-- ACTION PANEL (TOWN CONTROLS) -->
+  <!-- ACTION PANEL -->
   <div id="action-panel">
     <div id="town-controls" class="action-group">
-      <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
-      <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
-      <button id="sell-btn" onclick="sellDish()" disabled>Sell Dish</button>
+      <button id="kitchen-btn" onclick="openModal('kitchen-modal')">🍳 KITCHEN</button>
+      <button id="heal-btn" onclick="eatBestDish()" disabled>🍲 Eat Dish</button>
+      <button id="sell-btn" onclick="sellAllDishes()" disabled>Sell All</button>
       <button id="shop-btn" onclick="openModal('shop-modal')">🛒 SHOP</button>
       <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
     </div>
@@ -51,16 +58,56 @@
     <button id="reset-btn" onclick="resetGame()">🔄 NEW GAME</button>
   </div>
 
-  <!-- MOBILE VIRTUAL CONTROLS (Hidden in Town, Shown in Hunt) -->
+  <!-- MOBILE VIRTUAL CONTROLS -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div class="button-group">
+      <button class="action-circle-btn" id="grab-btn" onclick="grabNearbyItem()">🌿 GRAB</button>
       <button class="action-circle-btn" id="attack-btn" onclick="triggerAttack()">⚔️ ATTACK</button>
     </div>
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Welcome to Town! Walk around your village or click the green button above to go hunt.</div>
+  <div id="log">Welcome to Town! Travel to the Hunting Grounds to hunt slimes and grab 🌿 Herbs & 🍄 Mushrooms!</div>
+
+  <!-- KITCHEN & RECIPE BOOK MODAL -->
+  <div id="kitchen-modal" class="modal">
+    <div class="modal-content modal-blue">
+      <h3 class="modal-title-blue">🍳 Town Kitchen & Recipe Book</h3>
+      <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
+        Gather new ingredients in the wild to unlock better recipes!
+      </p>
+
+      <!-- Recipe 1: Always Unlocked -->
+      <div class="shop-item">
+        <span>
+          <strong>🍖 Meat Skewer</strong><br>
+          <small>Requires: 1 🥩 Meat | Value: <span id="val-skewer">15</span> 🪙</small>
+        </span>
+        <button onclick="cookRecipe('skewer')" id="cook-skewer">Cook</button>
+      </div>
+
+      <!-- Recipe 2: Unlocks when Herb is found -->
+      <div class="shop-item" id="recipe-box-steak">
+        <span id="recipe-info-steak">
+          <strong>🔒 Locked Recipe</strong><br>
+          <small>Find a 🌿 Wild Herb to unlock!</small>
+        </span>
+        <button onclick="cookRecipe('steak')" id="cook-steak" disabled>Locked</button>
+      </div>
+
+      <!-- Recipe 3: Unlocks when Mushroom is found -->
+      <div class="shop-item" id="recipe-box-stew">
+        <span id="recipe-info-stew">
+          <strong>🔒 Locked Recipe</strong><br>
+          <small>Find a 🍄 Wild Mushroom to unlock!</small>
+        </span>
+        <button onclick="cookRecipe('stew')" id="cook-stew" disabled>Locked</button>
+      </div>
+
+      <button class="close-btn" onclick="closeModal('kitchen-modal')">Close Kitchen</button>
+    </div>
+  </div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
@@ -83,7 +130,7 @@
         <button onclick="buyUpgrade('int')" id="btn-int">20 🪙</button>
       </div>
       <div class="shop-item">
-        <span><strong>👁️ Wisdom (+2 WIS)</strong><br><small>Double-Meat Chance</small></span>
+        <span><strong>👁️ Wisdom (+2 WIS)</strong><br><small>Double-Harvest Chance</small></span>
         <button onclick="buyUpgrade('wis')" id="btn-wis">20 🪙</button>
       </div>
       <div class="shop-item">
