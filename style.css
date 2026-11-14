@@ -89,7 +89,7 @@ canvas {
   display: block;
   width: 100%;
   max-width: 600px;
-  height: 290px;
+  height: 280px;
   touch-action: none;
 }
 
@@ -259,9 +259,11 @@ button:disabled {
 
 .modal-purple { border-color: #cba6f7; }
 .modal-blue { border-color: #89dceb; }
+.modal-orange { border-color: #fab387; }
 .modal-title-gold { color: #f9e2af; margin-top: 0; text-align: center; }
 .modal-title-purple { color: #cba6f7; margin-top: 0; text-align: center; }
 .modal-title-blue { color: #89dceb; margin-top: 0; text-align: center; }
+.modal-title-orange { color: #fab387; margin-top: 0; text-align: center; }
 
 .shop-item {
   display: flex;
@@ -274,6 +276,6 @@ button:disabled {
   font-size: 11px;
 }
 
-.shop-item button { max-width: 75px; margin-left: 8px; }
+.shop-item button { max-width: 85px; margin-left: 8px; }
 .stat-desc { background-color: #181825; padding: 8px; margin: 6px 0; border-radius: 6px; font-size: 11px; line-height: 1.4; }
 .close-btn { background-color: #f38ba8; margin-top: 10px; width: 100%; padding: 10px; }
