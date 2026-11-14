@@ -3,242 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>RPGHuntCook - Fixed Joystick & Player HP Bar</title>
-  <style>
-    body {
-      background-color: #1e1e2e;
-      color: #cdd6f4;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      margin: 0;
-      padding: 6px;
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    /* Top Resource & Health Bar */
-    #ui-bar {
-      width: 100%;
-      max-width: 600px;
-      background-color: #313244;
-      padding: 8px 12px;
-      box-sizing: border-box;
-      border-radius: 8px 8px 0 0;
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: bold;
-      border: 2px solid #45475a;
-      border-bottom: none;
-    }
-
-    /* 6-Stat RPG Grid */
-    #stats-bar {
-      width: 100%;
-      max-width: 600px;
-      background-color: #252533;
-      padding: 6px 10px;
-      box-sizing: border-box;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      font-size: 11px;
-      color: #b4befe;
-      border-left: 2px solid #45475a;
-      border-right: 2px solid #45475a;
-      text-align: center;
-    }
-
-    /* Bigger Game Screen */
-    canvas {
-      background-color: #181825;
-      border: 2px solid #45475a;
-      display: block;
-      width: 100%;
-      max-width: 600px;
-      height: 340px;
-      touch-action: none;
-    }
-
-    /* Action Buttons */
-    #action-panel {
-      width: 100%;
-      max-width: 600px;
-      background-color: #313244;
-      padding: 8px;
-      box-sizing: border-box;
-      border: 2px solid #45475a;
-      border-top: none;
-      display: flex;
-      justify-content: space-between;
-      gap: 5px;
-    }
-
-    button {
-      background-color: #89b4fa;
-      color: #11111b;
-      border: none;
-      padding: 8px 6px;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
-      flex: 1;
-      touch-action: manipulation;
-    }
-
-    button:disabled {
-      background-color: #45475a;
-      color: #6c7086;
-      cursor: not-allowed;
-    }
-
-    #shop-btn { background-color: #f9e2af; }
-    #char-btn { background-color: #cba6f7; }
-    #heal-btn { background-color: #a6e3a1; }
-
-    /* Mobile Controls */
-    #mobile-controls {
-      width: 100%;
-      max-width: 600px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #242433;
-      padding: 12px 18px;
-      box-sizing: border-box;
-      border: 2px solid #45475a;
-      border-top: none;
-      border-radius: 0 0 8px 8px;
-      touch-action: none;
-    }
-
-    #joystick-base {
-      width: 100px;
-      height: 100px;
-      background-color: rgba(69, 71, 90, 0.7);
-      border: 2px solid #585b70;
-      border-radius: 50%;
-      position: relative;
-      touch-action: none;
-      cursor: grab;
-    }
-
-    #joystick-knob {
-      width: 42px;
-      height: 42px;
-      background-color: #89b4fa;
-      border-radius: 50%;
-      position: absolute;
-      top: 29px;
-      left: 29px;
-      pointer-events: none;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-    }
-
-    .action-circle-btn {
-      width: 74px;
-      height: 74px;
-      border-radius: 50%;
-      border: none;
-      font-size: 11px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      touch-action: manipulation;
-    }
-
-    .action-circle-btn:active {
-      transform: scale(0.93);
-    }
-
-    #attack-btn { background-color: #f38ba8; color: #11111b; }
-    #dodge-btn { background-color: #fab387; color: #11111b; }
-
-    #log {
-      width: 100%;
-      max-width: 600px;
-      margin-top: 6px;
-      padding: 8px 10px;
-      background-color: #313244;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 11px;
-      color: #a6e3a1;
-      min-height: 20px;
-      border: 2px solid #45475a;
-    }
-
-    /* Modals */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.75);
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-      padding: 10px;
-      box-sizing: border-box;
-    }
-
-    .modal-content {
-      background-color: #313244;
-      border: 2px solid #f9e2af;
-      padding: 15px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 380px;
-      max-height: 85vh;
-      overflow-y: auto;
-      text-align: left;
-    }
-
-    .shop-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #181825;
-      padding: 8px 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      font-size: 11px;
-    }
-
-    .shop-item button {
-      max-width: 70px;
-      margin-left: 8px;
-    }
-
-    .stat-desc {
-      background-color: #181825;
-      padding: 8px;
-      margin: 6px 0;
-      border-radius: 6px;
-      font-size: 11px;
-      line-height: 1.4;
-    }
-
-    .close-btn {
-      background-color: #f38ba8;
-      margin-top: 10px;
-      width: 100%;
-      padding: 10px;
-    }
-  </style>
+  <title>RPGHuntCook</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -247,7 +13,7 @@
     <span id="stat-gold">🪙 0</span>
     <span id="stat-meat">🥩 0/5</span>
     <span id="stat-dish">🍖 0</span>
-    <span id="stat-hp" style="color: #a6e3a1;">HP: 100/100</span>
+    <span id="stat-hp">HP: 100/100</span>
   </div>
 
   <!-- 6-STAT RPG ATTRIBUTES BAR -->
@@ -260,10 +26,10 @@
     <span id="disp-cha">✨ CHA: 10</span>
   </div>
 
-  <!-- BIGGER GAME SCREEN -->
+  <!-- GAME SCREEN -->
   <canvas id="gameCanvas" width="600" height="340"></canvas>
 
-  <!-- ACTION CONTROLS -->
+  <!-- KITCHEN & MENU CONTROLS -->
   <div id="action-panel">
     <button id="cook-btn" onclick="cookDish()" disabled>Cook (1 🥩)</button>
     <button id="heal-btn" onclick="healPlayer()" disabled>🍲 Eat Stew</button>
@@ -272,7 +38,13 @@
     <button id="char-btn" onclick="openModal('char-modal')">📜 STATS</button>
   </div>
 
-  <!-- MOBILE CONTROLS -->
+  <!-- SAVE / LOAD BAR -->
+  <div id="save-panel">
+    <button id="save-btn" onclick="saveGame()">💾 SAVE GAME</button>
+    <button id="reset-btn" onclick="resetGame()">🔄 NEW GAME</button>
+  </div>
+
+  <!-- MOBILE VIRTUAL CONTROLS -->
   <div id="mobile-controls">
     <div id="joystick-base"><div id="joystick-knob"></div></div>
     <div class="button-group">
@@ -282,18 +54,18 @@
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Drag the blue joystick on the left to move! Watch the green HP bar above your hero.</div>
+  <div id="log">Watch for the Slime's ⚠️ yellow warning before it strikes, then tap 🏃‍♂️ DODGE!</div>
 
   <!-- SHOP MODAL -->
   <div id="shop-modal" class="modal">
     <div class="modal-content">
-      <h3 style="color: #f9e2af; margin-top:0; text-align:center;">🛒 Attribute Training Shop</h3>
+      <h3 class="modal-title-gold">🛒 Attribute Training Shop</h3>
       <div class="shop-item">
         <span><strong>💪 Strength (+2 STR)</strong><br><small>Melee DMG & Bag Limit</small></span>
         <button onclick="buyUpgrade('str')" id="btn-str">20 🪙</button>
       </div>
       <div class="shop-item">
-        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Speed & Dodge Chance</small></span>
+        <span><strong>⚡ Dexterity (+2 DEX)</strong><br><small>Speed & Passive Dodge</small></span>
         <button onclick="buyUpgrade('dex')" id="btn-dex">20 🪙</button>
       </div>
       <div class="shop-item">
@@ -318,8 +90,8 @@
 
   <!-- CHARACTER SHEET MODAL -->
   <div id="char-modal" class="modal">
-    <div class="modal-content" style="border-color: #cba6f7;">
-      <h3 style="color: #cba6f7; margin-top:0; text-align:center;">📜 Character Attributes</h3>
+    <div class="modal-content modal-purple">
+      <h3 class="modal-title-purple">📜 Character Attributes</h3>
       <div class="stat-desc" id="desc-str"></div>
       <div class="stat-desc" id="desc-dex"></div>
       <div class="stat-desc" id="desc-con"></div>
@@ -330,315 +102,6 @@
     </div>
   </div>
 
-  <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const logEl = document.getElementById("log");
-
-    const player = {
-      x: 100,
-      y: 150,
-      size: 28,
-      hp: 100,
-      gold: 0,
-      rawMeat: 0,
-      cookedDishes: 0,
-      isDodging: false,
-      dodgeTimer: 0,
-      str: 10,
-      dex: 10,
-      con: 10,
-      int: 10,
-      wis: 10,
-      cha: 10
-    };
-
-    function getAttackDmg() { return player.str; }
-    function getMaxBagWeight() { return Math.floor(player.str / 2); }
-    function getMoveSpeed() { return 3 + (player.dex * 0.1); }
-    function getDodgeChance() { return Math.min(65, (player.dex - 8) * 4); }
-    function getMaxHp() { return 50 + (player.con * 5); }
-    function getDamageReduction() { return Math.floor((player.con - 10) / 2); }
-    function getDishSellPrice() { return 10 + Math.floor(player.int * 0.8) + Math.floor(player.cha * 0.5); }
-    function getDoubleDropChance() { return Math.min(75, (player.wis - 8) * 4); }
-    function getUpgradeCost() {
-      let discount = Math.floor((player.cha - 10) * 1.5);
-      return Math.max(5, 20 - discount);
-    }
-
-    let enemy = {
-      x: 450,
-      y: 150,
-      size: 34,
-      hp: 30,
-      maxHp: 30,
-      atk: 12,
-      alive: true
-    };
-
-    const keys = {};
-    window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
-    window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
-
-    // --- FIXED MULTI-TOUCH POINTER JOYSTICK ---
-    let activePointerId = null;
-    let joystickMoveX = 0;
-    let joystickMoveY = 0;
-    const base = document.getElementById("joystick-base");
-    const knob = document.getElementById("joystick-knob");
-
-    base.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      activePointerId = e.pointerId;
-      base.setPointerCapture(e.pointerId); // Locks this finger to the joystick!
-      updateJoystickPosition(e.clientX, e.clientY);
-    });
-
-    base.addEventListener("pointermove", (e) => {
-      if (e.pointerId !== activePointerId) return;
-      e.preventDefault();
-      updateJoystickPosition(e.clientX, e.clientY);
-    });
-
-    base.addEventListener("pointerup", (e) => {
-      if (e.pointerId === activePointerId) {
-        resetJoystick(e.pointerId);
-      }
-    });
-
-    base.addEventListener("pointercancel", (e) => {
-      if (e.pointerId === activePointerId) {
-        resetJoystick(e.pointerId);
-      }
-    });
-
-    function updateJoystickPosition(clientX, clientY) {
-      const rect = base.getBoundingClientRect();
-      const dx = clientX - (rect.left + rect.width / 2);
-      const dy = clientY - (rect.top + rect.height / 2);
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const maxRadius = 35;
-
-      const angle = Math.atan2(dy, dx);
-      const pull = Math.min(distance, maxRadius);
-
-      joystickMoveX = Math.cos(angle) * (pull / maxRadius);
-      joystickMoveY = Math.sin(angle) * (pull / maxRadius);
-
-      knob.style.transform = `translate(${Math.cos(angle) * pull}px, ${Math.sin(angle) * pull}px)`;
-    }
-
-    function resetJoystick(pointerId) {
-      if (pointerId !== undefined && base.hasPointerCapture(pointerId)) {
-        base.releasePointerCapture(pointerId);
-      }
-      activePointerId = null;
-      joystickMoveX = 0;
-      joystickMoveY = 0;
-      knob.style.transform = `translate(0px, 0px)`;
-    }
-
-    function updateUI() {
-      const maxHp = getMaxHp();
-      const maxBag = getMaxBagWeight();
-      const cost = getUpgradeCost();
-
-      document.getElementById("stat-gold").textContent = `🪙 ${player.gold}`;
-      document.getElementById("stat-meat").textContent = `🥩 ${player.rawMeat}/${maxBag}`;
-      document.getElementById("stat-dish").textContent = `🍖 ${player.cookedDishes}`;
-      
-      const hpEl = document.getElementById("stat-hp");
-      hpEl.textContent = `HP: ${player.hp}/${maxHp}`;
-      hpEl.style.color = player.hp <= (maxHp * 0.35) ? "#f38ba8" : "#a6e3a1";
-
-      document.getElementById("disp-str").textContent = `💪 STR: ${player.str}`;
-      document.getElementById("disp-dex").textContent = `⚡ DEX: ${player.dex}`;
-      document.getElementById("disp-con").textContent = `🛡️ CON: ${player.con}`;
-      document.getElementById("disp-int").textContent = `🧠 INT: ${player.int}`;
-      document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
-      document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
-
-      document.getElementById("cook-btn").disabled = player.rawMeat < 1;
-      
-      const healBtn = document.getElementById("heal-btn");
-      healBtn.disabled = player.cookedDishes < 1 || player.hp >= maxHp;
-
-      const sellBtn = document.getElementById("sell-btn");
-      sellBtn.disabled = player.cookedDishes < 1;
-      sellBtn.textContent = `Sell (+${getDishSellPrice()} 🪙)`;
-
-      ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(stat => {
-        document.getElementById(`btn-${stat}`).textContent = `${cost} 🪙`;
-      });
-
-      document.getElementById("desc-str").innerHTML = `<strong>💪 Strength (${player.str}):</strong> Carry weight & damage.<br><em>Effect: ${getAttackDmg()} DMG | Max Carry: ${maxBag} Meat</em>`;
-      document.getElementById("desc-dex").innerHTML = `<strong>⚡ Dexterity (${player.dex}):</strong> Speed & reflex.<br><em>Effect: Speed ${getMoveSpeed().toFixed(1)} | ${getDodgeChance()}% Dodge Chance</em>`;
-      document.getElementById("desc-con").innerHTML = `<strong>🛡️ Constitution (${player.con}):</strong> Health & defense.<br><em>Effect: ${maxHp} Max HP | -${getDamageReduction()} DMG Taken</em>`;
-      document.getElementById("desc-int").innerHTML = `<strong>🧠 Intelligence (${player.int}):</strong> Logic & research.<br><em>Effect: Boosts dish gold value</em>`;
-      document.getElementById("desc-wis").innerHTML = `<strong>👁️ Wisdom (${player.wis}):</strong> Intuition.<br><em>Effect: ${getDoubleDropChance()}% chance for 2x meat</em>`;
-      document.getElementById("desc-cha").innerHTML = `<strong>✨ Charisma (${player.cha}):</strong> Persuasion.<br><em>Effect: Shop upgrades cost ${cost} 🪙</em>`;
-    }
-
-    function respawnEnemy() {
-      enemy.hp = enemy.maxHp;
-      enemy.alive = true;
-      enemy.x = Math.floor(Math.random() * (canvas.width - 100)) + 50;
-      enemy.y = Math.floor(Math.random() * (canvas.height - 100)) + 50;
-    }
-
-    function cookDish() {
-      if (player.rawMeat >= 1) {
-        player.rawMeat--;
-        player.cookedDishes++;
-        logEl.textContent = "Cooked 1 Raw Meat into a hearty dish! 🍖";
-        updateUI();
-      }
-    }
-
-    function healPlayer() {
-      const maxHp = getMaxHp();
-      if (player.cookedDishes >= 1 && player.hp < maxHp) {
-        player.cookedDishes--;
-        const healAmount = Math.floor(maxHp * 0.5);
-        player.hp = Math.min(maxHp, player.hp + healAmount);
-        logEl.textContent = `🍲 Ate a hot stew and restored ${healAmount} HP!`;
-        updateUI();
-      }
-    }
-
-    function sellDish() {
-      if (player.cookedDishes >= 1) {
-        player.cookedDishes--;
-        const earned = getDishSellPrice();
-        player.gold += earned;
-        logEl.textContent = `Sold dish for ${earned} Gold! 🪙`;
-        updateUI();
-      }
-    }
-
-    function triggerDodge() {
-      if (player.dodgeTimer > 0 || player.hp <= 0) return;
-      player.isDodging = true;
-      player.dodgeTimer = 45;
-      logEl.textContent = "🏃‍♂️ DODGED! You rolled smoothly out of harm's way!";
-      setTimeout(() => { player.isDodging = false; }, 350);
-    }
-
-    function triggerAttack() {
-      if (!enemy.alive || player.hp <= 0) return;
-      const distanceX = Math.abs((player.x + player.size/2) - (enemy.x + enemy.size/2));
-      const distanceY = Math.abs((player.y + player.size/2) - (enemy.y + enemy.size/2));
-
-      if (distanceX < 65 && distanceY < 65) {
-        if (player.rawMeat >= getMaxBagWeight()) {
-          logEl.textContent = "Bag is FULL! Cook your meat or upgrade STR! 🎒";
-          return;
-        }
-
-        const dmg = getAttackDmg();
-        enemy.hp -= dmg;
-
-        if (enemy.hp <= 0) {
-          enemy.alive = false;
-          const isDouble = (Math.random() * 100) < getDoubleDropChance();
-          const gained = isDouble ? 2 : 1;
-          player.rawMeat = Math.min(getMaxBagWeight(), player.rawMeat + gained);
-
-          logEl.textContent = isDouble 
-            ? `👁️ WISDOM PROC! Slain Slime & harvested 2x Raw Meat! (🥩)` 
-            : `Defeated Slime! Harvested 1x Raw Meat (🥩).`;
-          
-          updateUI();
-          setTimeout(respawnEnemy, 1500);
-        } else {
-          if (player.isDodging || (Math.random() * 100) < getDodgeChance()) {
-            logEl.textContent = `Hit slime for ${dmg} DMG! ⚡ Dodged the counter-attack!`;
-          } else {
-            const taken = Math.max(1, enemy.atk - getDamageReduction());
-            player.hp = Math.max(0, player.hp - taken);
-            logEl.textContent = `Hit slime for ${dmg} DMG! Took ${taken} DMG. (Tap 🍲 Eat Stew to heal!)`;
-            if (player.hp === 0) logEl.textContent = "You fainted! Refresh page to restart.";
-          }
-        }
-        updateUI();
-      } else {
-        logEl.textContent = "Too far away from the slime!";
-      }
-    }
-
-    function openModal(id) { updateUI(); document.getElementById(id).style.display = "flex"; }
-    function closeModal(id) { document.getElementById(id).style.display = "none"; }
-
-    function buyUpgrade(stat) {
-      const cost = getUpgradeCost();
-      if (player.gold >= cost) {
-        player.gold -= cost;
-        player[stat] += 2;
-        if (stat === 'con') player.hp = getMaxHp();
-        logEl.textContent = `Trained ${stat.toUpperCase()} +2! Check 📜 STATS.`;
-        updateUI();
-      } else {
-        logEl.textContent = `Not enough Gold! Need ${cost} 🪙.`;
-      }
-    }
-
-    function update() {
-      if (player.hp <= 0) return;
-      if (player.dodgeTimer > 0) player.dodgeTimer--;
-
-      let moveX = joystickMoveX;
-      let moveY = joystickMoveY;
-
-      if (keys["w"] || keys["arrowup"]) moveY = -1;
-      if (keys["s"] || keys["arrowdown"]) moveY = 1;
-      if (keys["a"] || keys["arrowleft"]) moveX = -1;
-      if (keys["d"] || keys["arrowright"]) moveX = 1;
-
-      const spd = getMoveSpeed() * (player.isDodging ? 1.8 : 1.0);
-      if (moveX !== 0 || moveY !== 0) {
-        player.x += moveX * spd;
-        player.y += moveY * spd;
-      }
-
-      player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-      player.y = Math.max(12, Math.min(canvas.height - player.size, player.y));
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw Player
-      ctx.fillStyle = player.isDodging ? "rgba(137, 180, 250, 0.5)" : "#89b4fa";
-      ctx.fillRect(player.x, player.y, player.size, player.size);
-
-      // Draw Player HP Bar directly above head
-      const maxHp = getMaxHp();
-      const hpRatio = player.hp / maxHp;
-      ctx.fillStyle = "#45475a";
-      ctx.fillRect(player.x - 4, player.y - 8, player.size + 8, 5);
-      ctx.fillStyle = hpRatio <= 0.35 ? "#f38ba8" : "#a6e3a1";
-      ctx.fillRect(player.x - 4, player.y - 8, (player.size + 8) * hpRatio, 5);
-
-      // Draw Enemy
-      if (enemy.alive) {
-        ctx.fillStyle = "#f38ba8";
-        ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
-
-        ctx.fillStyle = "#45475a";
-        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size, 5);
-        ctx.fillStyle = "#fab387";
-        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size * (enemy.hp / enemy.maxHp), 5);
-      }
-    }
-
-    function gameLoop() {
-      update();
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-
-    updateUI();
-    gameLoop();
-  </script>
+  <script src="game.js"></script>
 </body>
 </html>
