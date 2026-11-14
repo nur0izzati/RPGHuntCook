@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RPGHuntCook - Basic Prototype</title>
+  <style>
+    body {
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    #ui-bar {
+      width: 650px;
+      background-color: #313244;
+      padding: 10px 16px;
+      box-sizing: border-box;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: bold;
+      border: 2px solid #45475a;
+      border-bottom: none;
+    }
+
+    canvas {
+      background-color: #181825;
+      border: 2px solid #45475a;
+      display: block;
+    }
+
+    #action-panel {
+      width: 650px;
+      background-color: #313244;
+      padding: 10px 16px;
+      box-sizing: border-box;
+      border: 2px solid #45475a;
+      border-top: none;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    button {
+      background-color: #89b4fa;
+      color: #11111b;
+      border: none;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #b4befe;
+    }
+
+    button:disabled {
+      background-color: #45475a;
+      color: #6c7086;
+      cursor: not-allowed;
+    }
+
+    #log {
+      width: 650px;
+      margin-top: 10px;
+      padding: 10px 16px;
+      background-color: #313244;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 13px;
+      color: #a6e3a1;
+      min-height: 20px;
+      border: 2px solid #45475a;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- RPG INFO & STATS -->
+  <div id="ui-bar">
+    <span id="stat-gold">Gold: 🪙 0</span>
+    <span id="stat-meat">Raw Meat: 🥩 0</span>
+    <span id="stat-dish">Cooked Dishes: 🍖 0</span>
+    <span id="stat-hp">HP: 100/100</span>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <canvas id="gameCanvas" width="650" height="350"></canvas>
+
+  <!-- COOK & SELL KITCHEN CONTROLS -->
+  <div id="action-panel">
+    <button id="cook-btn" onclick="cookDish()" disabled>Cook 1 Raw Meat (1 🥩)</button>
+    <button id="sell-btn" onclick="sellDish()" disabled>Sell Cooked Dish (+15 🪙)</button>
+  </div>
+
+  <!-- GAME MESSAGE LOG -->
+  <div id="log">Welcome to RPGHuntCook! Use WASD/Arrows to hunt the Slime for meat.</div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const logEl = document.getElementById("log");
+
+    // --- FUTURE IMAGE HOOKS (Leave commented until you add pictures) ---
+    // const heroImg = new Image(); heroImg.src = "hero.png";
+    // const slimeImg = new Image(); slimeImg.src = "slime.png";
+
+    // Player Stats & Inventory
+    const player = {
+      x: 60,
+      y: 150,
+      size: 30,
+      speed: 4,
+      hp: 100,
+      maxHp: 100,
+      gold: 0,
+      rawMeat: 0,
+      cookedDishes: 0,
+      attackCooldown: 0
+    };
+
+    // Enemy / Monster Data
+    let enemy = {
+      x: 450,
+      y: 150,
+      size: 34,
+      hp: 30,
+      maxHp: 30,
+      atk: 10,
+      alive: true
+    };
+
+    // Keyboard tracking
+    const keys = {};
+    window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+    window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+
+    // Update Text UI and Button states
+    function updateUI() {
+      document.getElementById("stat-gold").textContent = `Gold: 🪙 ${player.gold}`;
+      document.getElementById("stat-meat").textContent = `Raw Meat: 🥩 ${player.rawMeat}`;
+      document.getElementById("stat-dish").textContent = `Cooked Dishes: 🍖 ${player.cookedDishes}`;
+      document.getElementById("stat-hp").textContent = `HP: ${player.hp}/${player.maxHp}`;
+
+      // Enable/disable buttons based on inventory
+      document.getElementById("cook-btn").disabled = player.rawMeat < 1;
+      document.getElementById("sell-btn").disabled = player.cookedDishes < 1;
+    }
+
+    // Collision check helper
+    function isColliding(a, b) {
+      return (
+        a.x < b.x + b.size &&
+        a.x + a.size > b.x &&
+        a.y < b.y + b.size &&
+        a.y + a.size > b.y
+      );
+    }
+
+    // Respawn enemy after defeat
+    function respawnEnemy() {
+      enemy.hp = enemy.maxHp;
+      enemy.alive = true;
+      enemy.x = Math.floor(Math.random() * (canvas.width - 150)) + 120;
+      enemy.y = Math.floor(Math.random() * (canvas.height - 80)) + 40;
+    }
+
+    // --- COOKING MECHANIC ---
+    function cookDish() {
+      if (player.rawMeat >= 1) {
+        player.rawMeat--;
+        player.cookedDishes++;
+        logEl.textContent = "Kitchen: Cooked 1 piece of Monster Meat into a delicious Skewer! 🍖";
+        updateUI();
+      }
+    }
+
+    // --- SELLING MECHANIC ---
+    function sellDish() {
+      if (player.cookedDishes >= 1) {
+        player.cookedDishes--;
+        player.gold += 15;
+        logEl.textContent = "Shop: Sold a Cooked Dish to hungry villagers for 15 Gold! 🪙";
+        updateUI();
+      }
+    }
+
+    // Game loop update
+    function update() {
+      if (player.hp <= 0) return;
+
+      if (player.attackCooldown > 0) player.attackCooldown--;
+
+      const prevX = player.x;
+      const prevY = player.y;
+
+      // Movement controls
+      if (keys["w"] || keys["arrowup"]) player.y -= player.speed;
+      if (keys["s"] || keys["arrowdown"]) player.y += player.speed;
+      if (keys["a"] || keys["arrowleft"]) player.x -= player.speed;
+      if (keys["d"] || keys["arrowright"]) player.x += player.speed;
+
+      // Keep player inside screen boundaries
+      player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
+      player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+
+      // Combat collision with Slime
+      if (enemy.alive && isColliding(player, enemy)) {
+        player.x = prevX;
+        player.y = prevY;
+
+        if (player.attackCooldown === 0) {
+          player.attackCooldown = 30; // Attack speed limiter
+          enemy.hp -= 15; // Player deals 15 damage
+
+          if (enemy.hp <= 0) {
+            enemy.alive = false;
+            player.rawMeat++;
+            logEl.textContent = "Hunt Success! Defeated Slime and harvested 1x Raw Meat (🥩).";
+            updateUI();
+            setTimeout(respawnEnemy, 1500); // Respawns after 1.5s
+          } else {
+            player.hp = Math.max(0, player.hp - enemy.atk);
+            logEl.textContent = `Hit Slime! Took ${enemy.atk} DMG in return.`;
+            if (player.hp === 0) {
+              logEl.textContent = "You fainted! Refresh the page to try again.";
+              logEl.style.color = "#f38ba8";
+            }
+          }
+          updateUI();
+        }
+      }
+    }
+
+    // Render graphics (shapes)
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Hero (Blue Square)
+      ctx.fillStyle = "#89b4fa";
+      ctx.fillRect(player.x, player.y, player.size, player.size);
+      // Later: ctx.drawImage(heroImg, player.x, player.y, player.size, player.size);
+
+      // Draw Enemy / Slime (Red Square + HP Bar)
+      if (enemy.alive) {
+        ctx.fillStyle = "#f38ba8";
+        ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+        // Later: ctx.drawImage(slimeImg, enemy.x, enemy.y, enemy.size, enemy.size);
+
+        // Enemy HP mini bar
+        ctx.fillStyle = "#45475a";
+        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size, 5);
+        ctx.fillStyle = "#a6e3a1";
+        ctx.fillRect(enemy.x, enemy.y - 8, enemy.size * (enemy.hp / enemy.maxHp), 5);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    updateUI();
+    gameLoop();
+  </script>
+</body>
+</html>
