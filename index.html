@@ -8,17 +8,26 @@
 </head>
 <body>
 
+  <!-- PROMINENT CENTER SCREEN SLEEP / ACTION ALERT OVERLAY -->
+  <div id="center-popup-overlay">
+    <div id="center-popup-box">
+      <h2 id="popup-title">Resting</h2>
+      <p id="popup-msg">You slept soundly!</p>
+      <button onclick="closeCenterPopup()" style="background:#89b4fa; color:#111; padding:8px 16px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">OK</button>
+    </div>
+  </div>
+
   <!-- ON-SCREEN ALERT BANNER -->
   <div id="alert-banner">Welcome to RPGHuntCook!</div>
 
-  <!-- TOP RESOURCE, DAY & HP BAR -->
+  <!-- TOP RESOURCE, DAY, TIME & HP BAR -->
   <div id="ui-bar">
-    <span id="stat-day">☀️ Day 1</span>
-    <span id="stat-gold">🪙 100</span>
+    <span id="stat-daytime">☀️ Day 1 (Morning)</span>
+    <span id="stat-gold">🪙 150</span>
     <span id="stat-hp">HP: 100/100</span>
   </div>
 
-  <!-- INGREDIENTS BAR (Max 99 each) -->
+  <!-- INGREDIENTS BAR -->
   <div id="inv-bar">
     <span id="inv-meat">🥩: 0/99</span>
     <span id="inv-prime">🍖: 0/99</span>
@@ -47,9 +56,11 @@
   <!-- ACTION PANEL -->
   <div id="action-panel">
     <div id="town-controls" class="action-group">
-      <button id="inn-btn" onclick="sleepAtInn()" style="background-color: #fab387;">🛌 Inn (Sleep)</button>
+      <button id="inn-btn" onclick="sleepAtInn()" style="background-color: #fab387;">🛌 Inn (Heal)</button>
+      <button id="camp-btn" onclick="restAtCamp()" style="background-color: #a6e3a1;">⛺ Camp (Free)</button>
+      <button id="guild-btn" onclick="openModal('guild-modal')" style="background-color: #89dceb;">⚔️ Guild</button>
       <button id="kitchen-btn" onclick="openModal('kitchen-modal')">🍳 Kitchen</button>
-      <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #cba6f7;">🗣️ Town Square</button>
+      <button id="npc-btn" onclick="openModal('npc-modal')" style="background-color: #cba6f7;">🗣️ Town</button>
       <button id="gacha-btn" onclick="openModal('gacha-modal')" style="background-color: #f38ba8;">🎁 Gacha</button>
       <button id="shop-btn" onclick="openModal('shop-modal')">🛒 Shop</button>
       <button id="char-btn" onclick="openModal('char-modal')">📜 Stats</button>
@@ -72,7 +83,19 @@
   </div>
 
   <!-- MESSAGE LOG -->
-  <div id="log">Explore Town or sleep at the Inn to advance days and fully restore HP!</div>
+  <div id="log">Walk around Town with the joystick or travel to the Hunting Grounds!</div>
+
+  <!-- ADVENTURER'S GUILD MODAL (QUESTS & PARTY) -->
+  <div id="guild-modal" class="modal">
+    <div class="modal-content modal-blue">
+      <h3 class="modal-title-blue">⚔️ Adventurer's Guild</h3>
+      <p style="font-size:11px; color:#cdd6f4; text-align:center; margin-top:0;">
+        Accept quests for gold & reputation, or recruit party members!
+      </p>
+      <div id="quest-board-container"></div>
+      <button class="close-btn" onclick="closeModal('guild-modal')">Close Guild</button>
+    </div>
+  </div>
 
   <!-- GACHA MODAL -->
   <div id="gacha-modal" class="modal">
@@ -93,7 +116,7 @@
   <!-- NPC DIALOGUE & DATING MODAL -->
   <div id="npc-modal" class="modal">
     <div class="modal-content modal-orange">
-      <h3 class="modal-title-orange">🗣️ Town Square & Party Invitations</h3>
+      <h3 class="modal-title-orange">🗣️ Town Square & Relationships</h3>
       <div id="npc-list-container"></div>
       <button class="close-btn" onclick="closeModal('npc-modal')">Close</button>
     </div>
@@ -109,14 +132,26 @@
     </div>
   </div>
 
-  <!-- KITCHEN MODAL -->
+  <!-- KITCHEN MODAL WITH REAL-TIME INGREDIENT COUNTS -->
   <div id="kitchen-modal" class="modal">
     <div class="modal-content modal-blue">
       <h3 class="modal-title-blue">🍳 Kitchen & Recipes</h3>
-      <div class="shop-item"><span><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat</small></span><button onclick="cookRecipe('skewer')">Cook</button></div>
-      <div class="shop-item"><span><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 + 1 🌿</small></span><button onclick="cookRecipe('steak')">Cook</button></div>
-      <div class="shop-item"><span><strong>🍖 Beast Feast</strong><br><small>1 🍖 Prime + 1 🍄</small></span><button onclick="cookRecipe('feast')">Cook</button></div>
-      <div class="shop-item"><span><strong>🌿 Herbal Salad</strong><br><small>2 🌿 + 1 🍄</small></span><button onclick="cookRecipe('salad')">Cook</button></div>
+      <div class="shop-item">
+        <span id="recipe-skewer"><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat (Left: 0)</small></span>
+        <button onclick="cookRecipe('skewer')">Cook</button>
+      </div>
+      <div class="shop-item">
+        <span id="recipe-steak"><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 + 1 🌿 (Left: 0)</small></span>
+        <button onclick="cookRecipe('steak')">Cook</button>
+      </div>
+      <div class="shop-item">
+        <span id="recipe-feast"><strong>🍖 Beast Feast</strong><br><small>1 🍖 Prime + 1 🍄 (Left: 0)</small></span>
+        <button onclick="cookRecipe('feast')">Cook</button>
+      </div>
+      <div class="shop-item">
+        <span id="recipe-salad"><strong>🌿 Herbal Salad</strong><br><small>2 🌿 + 1 🍄 (Left: 0)</small></span>
+        <button onclick="cookRecipe('salad')">Cook</button>
+      </div>
       <button class="close-btn" onclick="closeModal('kitchen-modal')">Close</button>
     </div>
   </div>
