@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- PROMINENT CENTER SCREEN SLEEP / ACTION ALERT OVERLAY -->
+  <!-- CENTER POPUP OVERLAY FOR SLEEPING / ALERTS -->
   <div id="center-popup-overlay">
     <div id="center-popup-box">
       <h2 id="popup-title">Resting</h2>
@@ -85,7 +85,7 @@
   <!-- MESSAGE LOG -->
   <div id="log">Walk around Town with the joystick or travel to the Hunting Grounds!</div>
 
-  <!-- ADVENTURER'S GUILD MODAL (QUESTS & PARTY) -->
+  <!-- ADVENTURER'S GUILD MODAL -->
   <div id="guild-modal" class="modal">
     <div class="modal-content modal-blue">
       <h3 class="modal-title-blue">⚔️ Adventurer's Guild</h3>
@@ -94,6 +94,17 @@
       </p>
       <div id="quest-board-container"></div>
       <button class="close-btn" onclick="closeModal('guild-modal')">Close Guild</button>
+    </div>
+  </div>
+
+  <!-- FOREST DIFFICULTY MODAL -->
+  <div id="forest-modal" class="modal">
+    <div class="modal-content modal-blue">
+      <h3 class="modal-title-blue">🌲 Choose Forest Difficulty</h3>
+      <button onclick="selectForestDifficulty('easy')" style="background:#a6e3a1; width:100%; margin:5px 0; padding:10px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Easy (Slimes - Weak)</button>
+      <button onclick="selectForestDifficulty('medium')" style="background:#fab387; width:100%; margin:5px 0; padding:10px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Medium (Goblins)</button>
+      <button onclick="selectForestDifficulty('hard')" style="background:#f38ba8; width:100%; margin:5px 0; padding:10px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Hard (Orc Bosses - Tough)</button>
+      <button class="close-btn" onclick="closeModal('forest-modal')">Cancel</button>
     </div>
   </div>
 
@@ -132,26 +143,23 @@
     </div>
   </div>
 
-  <!-- KITCHEN MODAL WITH REAL-TIME INGREDIENT COUNTS -->
+  <!-- KITCHEN MODAL WITH REAL-TIME INGREDIENT COUNTS & SELLING -->
   <div id="kitchen-modal" class="modal">
     <div class="modal-content modal-blue">
-      <h3 class="modal-title-blue">🍳 Kitchen & Recipes</h3>
-      <div class="shop-item">
-        <span id="recipe-skewer"><strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat (Left: 0)</small></span>
-        <button onclick="cookRecipe('skewer')">Cook</button>
+      <h3 class="modal-title-blue">🍳 Kitchen & Inventory Market</h3>
+      <div class="shop-item" id="recipe-skewer">
+        <strong>🍖 Meat Skewer</strong><br><small>1 🥩 Meat (Left: 0)</small> <button onclick="cookRecipe('skewer')">Cook</button>
       </div>
-      <div class="shop-item">
-        <span id="recipe-steak"><strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 + 1 🌿 (Left: 0)</small></span>
-        <button onclick="cookRecipe('steak')">Cook</button>
+      <div class="shop-item" id="recipe-steak">
+        <strong>🥗 Herb-Roasted Steak</strong><br><small>1 🥩 + 1 🌿</small> <button onclick="cookRecipe('steak')">Cook</button>
       </div>
-      <div class="shop-item">
-        <span id="recipe-feast"><strong>🍖 Beast Feast</strong><br><small>1 🍖 Prime + 1 🍄 (Left: 0)</small></span>
-        <button onclick="cookRecipe('feast')">Cook</button>
+      <div class="shop-item" id="recipe-salad">
+        <strong>🌿 Herbal Salad</strong><br><small>2 🌿 + 1 🍄</small> <button onclick="cookRecipe('salad')">Cook</button>
       </div>
-      <div class="shop-item">
-        <span id="recipe-salad"><strong>🌿 Herbal Salad</strong><br><small>2 🌿 + 1 🍄 (Left: 0)</small></span>
-        <button onclick="cookRecipe('salad')">Cook</button>
-      </div>
+
+      <h4 style="color:#f9e2af; margin:12px 0 5px 0; text-align:center;">🛒 Sell or Eat Items</h4>
+      <div id="sell-inventory-container"></div>
+
       <button class="close-btn" onclick="closeModal('kitchen-modal')">Close</button>
     </div>
   </div>
@@ -185,21 +193,8 @@
     </div>
   </div>
 
-  <!-- FOREST DIFFICULTY MODAL -->
-<div id="forest-modal" class="modal">
-  <div class="modal-content modal-blue">
-    <h3 class="modal-title-blue">🌲 Choose Forest Difficulty</h3>
-    <button onclick="selectForestDifficulty('easy')" style="background:#a6e3a1; width:100%; margin:5px 0; padding:10px;">Easy (Slimes - Weak)</button>
-    <button onclick="selectForestDifficulty('medium')" style="background:#fab387; width:100%; margin:5px 0; padding:10px;">Medium (Goblins)</button>
-    <button onclick="selectForestDifficulty('hard')" style="background:#f38ba8; width:100%; margin:5px 0; padding:10px;">Hard (Orc Bosses - Tough)</button>
-    <button class="close-btn" onclick="closeModal('forest-modal')">Cancel</button>
-  </div>
-</div>
-  
-  
   <script src="town.js"></script>
   <script src="forest.js"></script>
   <script src="game.js"></script>
-  
 </body>
 </html>
