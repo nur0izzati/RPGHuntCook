@@ -70,6 +70,10 @@
   <!-- SAVE / CHEAT BAR -->
   <div id="save-panel">
     <button id="save-btn" onclick="saveGame()">💾 Save</button>
+    <button id="pause-btn" onclick="togglePause()">⏸️ Pause</button>
+    <button onclick="exportSave()">⬇️ Backup</button>
+    <button onclick="document.getElementById('import-save-file').click()">⬆️ Import</button>
+    <input id="import-save-file" type="file" accept="application/json" hidden onchange="importSave(event)">
     <button id="cheat-btn" onclick="openCheatPrompt()" style="background-color: #f9e2af; color:#111;">🎁 Codes</button>
     <button id="reset-btn" onclick="resetGame()">🔄 Reset</button>
   </div>
@@ -182,7 +186,11 @@
   <!-- STATS MODAL -->
   <div id="char-modal" class="modal">
     <div class="modal-content modal-purple">
-      <h3 class="modal-title-purple">📜 Attributes & Inventory</h3>
+      <h3 class="modal-title-purple">📜 Character Progression</h3>
+      <div class="stat-desc" id="desc-level"></div>
+      <div class="stat-desc" id="desc-equipment"></div>
+      <div id="attribute-allocation" class="stat-desc"></div>
+      <h3 class="modal-title-purple">Attributes & Inventory</h3>
       <div class="stat-desc" id="desc-str"></div>
       <div class="stat-desc" id="desc-dex"></div>
       <div class="stat-desc" id="desc-con"></div>
