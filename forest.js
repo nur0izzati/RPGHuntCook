@@ -43,18 +43,12 @@ function triggerAttack() {
     }
   });
 
-  if (closest && minDist < getWeaponRange()) {
-    const weapon = getWeapon();
-    const critical = Math.random() < weapon.crit;
-    const dmg = Math.floor(getAttackDmg() * (critical ? 1.75 : 1));
+  if (closest && minDist < 75) {
+    const dmg = getAttackDmg();
     closest.hp -= dmg;
-    player.weaponProficiency = player.weaponProficiency || {};
-    player.weaponProficiency[player.weapon] = (player.weaponProficiency[player.weapon] || 0) + 1;
 
     if (closest.hp <= 0) {
       closest.alive = false;
-      player.monstersDefeated = (player.monstersDefeated || 0) + 1;
-      gainExp(25);
       const gained = Math.min(99, (Math.random()*100 < 30 ? 2 : 1));
       if (closest.dropType === "prime") {
         player.primeMeat = Math.min(99, player.primeMeat + gained);
@@ -67,7 +61,7 @@ function triggerAttack() {
       updateUI();
       setTimeout(() => { closest.hp = closest.maxHp; closest.alive = true; closest.x = Math.random()*400+50; closest.y = Math.random()*200+40; }, 4000);
     } else {
-      showAlert(`${critical ? "💥 CRITICAL! " : ""}Hit ${closest.name} for ${dmg} DMG!`, "info");
+      showAlert(`Hit ${closest.name} for ${dmg} DMG!`, "info");
     }
     updateUI();
   } else {
