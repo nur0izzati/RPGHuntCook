@@ -6,6 +6,9 @@ const alertBanner = document.getElementById("alert-banner");
 let currentMap = "town";
 let dayCount = 1;
 let timeOfDay = "Morning";
+let isPaused = false;
+let autoSaveFrame = 0;
+const SAVE_KEY = "RPGHuntCook_Save_v11";
 
 const DEFAULT_PLAYER = {
   x: 270,
@@ -27,7 +30,23 @@ const DEFAULT_PLAYER = {
   int: 10,
   wis: 10,
   cha: 10,
-  inventory: []
+  inventory: [],
+  level: 1,
+  exp: 0,
+  attributePoints: 0,
+  weapon: "Sword",
+  weaponProficiency: {},
+  monstersDefeated: 0
+};
+
+const WEAPONS = {
+  "Sword": { rarity: "Common", damage: 1.0, range: 75, crit: 0.05, speed: 1.0, description: "Balanced damage and reach." },
+  "Greatsword": { rarity: "Uncommon", damage: 1.65, range: 82, crit: 0.03, speed: 0.75, description: "Heavy hits, slower combat." },
+  "Dual Daggers": { rarity: "Rare", damage: 0.8, range: 58, crit: 0.22, speed: 1.35, description: "Fast attacks and critical hits." },
+  "Bow": { rarity: "Rare", damage: 0.9, range: 165, crit: 0.12, speed: 0.9, description: "Long-range physical attacks." },
+  "Staff": { rarity: "Epic", damage: 1.15, range: 135, crit: 0.08, speed: 0.9, description: "Intelligence-powered magic." },
+  "Spear": { rarity: "Uncommon", damage: 1.1, range: 105, crit: 0.08, speed: 0.95, description: "Long reach and steady damage." },
+  "Axe": { rarity: "Uncommon", damage: 1.4, range: 72, crit: 0.07, speed: 0.82, description: "Powerful chopping attacks." }
 };
 
 let player = { ...DEFAULT_PLAYER };
@@ -68,6 +87,92 @@ function advanceTime() {
       npcs.forEach(n => { n.talkedToday = false; n.giftGivenToday = false; });
     }
   }
+}
+
+// --- PLAYER PROGRESSION & WEAPON EQUIPMENT ---
+function expToNextLevel() { return 100 + (player.level - 1) * 50; }
+
+function gainExp(amount) {
+  player.exp = (player.exp || 0) + amount;
+  let leveled = false;
+  while (player.exp >= expToNextLevel()) {
+    player.exp -= expToNextLevel();
+    player.level = (player.level || 1) + 1;
+    player.attributePoints = (player.attributePoints || 0) + 3;
+    leveled = true;
+  }
+  if (leveled) {
+    player.hp = getMaxHp();
+    showAlert(`🎉 Level up! You are now Lv.${player.level}. +3 attribute points!`, "success");
+  }
+}
+
+function allocateAttribute(stat) {
+  const valid = ["str", "dex", "con", "int", "wis", "cha"];
+  if (!valid.includes(stat) || (player.attributePoints || 0) <= 0) return;
+  player[stat] = (player[stat] || 10) + 1;
+  player.attributePoints--;
+  if (stat === "con") player.hp = getMaxHp();
+  updateUI();
+}
+
+function equipWeapon(name) {
+  if (!WEAPONS[name]) return;
+  player.weapon = name;
+  showAlert(`⚔️ Equipped ${name}! ${WEAPONS[name].description}`, "success");
+  updateUI();
+}
+
+function getWeapon() { return WEAPONS[player.weapon] || WEAPONS.Sword; }
+function getWeaponRange() { return getWeapon().range; }
+
+function togglePause() {
+  isPaused = !isPaused;
+  const btn = document.getElementById("pause-btn");
+  if (btn) btn.textContent = isPaused ? "▶️ Resume" : "⏸️ Pause";
+  showAlert(isPaused ? "Game paused." : "Game resumed.", "info");
+}
+
+function exportSave() {
+  const data = buildSaveData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "RPGHuntCook-save.json"; a.click();
+  URL.revokeObjectURL(url);
+  showAlert("📦 Save backup exported!", "success");
+}
+
+function importSave(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.player || typeof data.player !== "object") throw new Error("Invalid save");
+      applySaveData(data);
+      saveGame(false);
+      updateUI();
+      showAlert("📂 Backup imported successfully!", "success");
+    } catch (err) {
+      showAlert("❌ Could not import this save file.", "danger");
+    }
+    event.target.value = "";
+  };
+  reader.readAsText(file);
+}
+
+function buildSaveData() {
+  return { version: 11, player, npcs: typeof npcs !== "undefined" ? npcs : [], dayCount, timeOfDay, activeQuests };
+}
+
+function applySaveData(data) {
+  player = { ...DEFAULT_PLAYER, ...(data.player || {}) };
+  if (data.npcs && typeof npcs !== "undefined") npcs = data.npcs;
+  if (data.dayCount) dayCount = data.dayCount;
+  if (data.timeOfDay) timeOfDay = data.timeOfDay;
+  if (data.activeQuests) activeQuests = data.activeQuests;
 }
 
 // --- CHEAT CODE & REWARD CODE REDEMPTION SYSTEM ---
@@ -176,7 +281,11 @@ function pullGacha() {
   updateUI();
 }
 
-function getAttackDmg() { return player.str + (typeof npcs !== 'undefined' ? npcs.filter(n => n.inParty).length * 5 : 0); }
+function getAttackDmg() {
+  const partyBonus = typeof npcs !== "undefined" ? npcs.filter(n => n.inParty).length * 5 : 0;
+  const stat = player.weapon === "Staff" ? player.int : player.str;
+  return Math.max(1, Math.floor((stat + partyBonus) * getWeapon().damage));
+}
 function getMaxHp() { return 50 + (player.con * 5); }
 function getMoveSpeed() { return 3 + (player.dex * 0.1); }
 function getDodgeChance() { return Math.min(70, (player.dex - 8) * 4); }
@@ -264,26 +373,26 @@ function cookRecipe(type) {
   updateUI();
 }
 
-function saveGame() {
-  localStorage.setItem("RPGHuntCook_Save_v10", JSON.stringify({ player, npcs: typeof npcs !== 'undefined' ? npcs : [], dayCount, timeOfDay, activeQuests }));
-  showAlert("💾 Game Saved!", "success");
+function saveGame(showMessage = true) {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData()));
+  if (showMessage) showAlert("💾 Game Saved!", "success");
 }
 
 function loadGame() {
-  const saved = localStorage.getItem("RPGHuntCook_Save_v10");
+  const saved = localStorage.getItem(SAVE_KEY) || localStorage.getItem("RPGHuntCook_Save_v10");
   if (saved) {
-    const data = JSON.parse(saved);
-    player = { ...DEFAULT_PLAYER, ...data.player };
-    if (data.npcs && typeof npcs !== 'undefined') npcs = data.npcs;
-    if (data.dayCount) dayCount = data.dayCount;
-    if (data.timeOfDay) timeOfDay = data.timeOfDay;
-    if (data.activeQuests) activeQuests = data.activeQuests;
-    showAlert("📂 Save loaded!", "success");
+    try {
+      applySaveData(JSON.parse(saved));
+      showAlert("📂 Save loaded!", "success");
+    } catch (err) {
+      showAlert("⚠️ Save file could not be loaded.", "danger");
+    }
   }
 }
 
 function resetGame() {
   if (confirm("Reset all progress?")) {
+    localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem("RPGHuntCook_Save_v10");
     player = { ...DEFAULT_PLAYER };
     dayCount = 1; timeOfDay = "Morning";
@@ -335,6 +444,22 @@ function updateUI() {
   document.getElementById("disp-wis").textContent = `👁️ WIS: ${player.wis}`;
   document.getElementById("disp-cha").textContent = `✨ CHA: ${player.cha}`;
 
+  const levelEl = document.getElementById("desc-level");
+  if (levelEl) {
+    const need = expToNextLevel();
+    levelEl.innerHTML = `<strong>⭐ Level ${player.level || 1}</strong><br>EXP: ${player.exp || 0}/${need} · Attribute points: ${player.attributePoints || 0}<div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, ((player.exp || 0) / need) * 100)}%"></div></div>`;
+  }
+  const equipEl = document.getElementById("desc-equipment");
+  if (equipEl) {
+    const weaponOptions = Object.keys(WEAPONS).map(name => `<option value="${name}" ${player.weapon === name ? "selected" : ""}>${name} (${WEAPONS[name].rarity})</option>`).join("");
+    const w = getWeapon();
+    equipEl.innerHTML = `<strong>⚔️ Weapon: ${player.weapon || "Sword"}</strong><br>${w.description}<br>Damage x${w.damage} · Range ${w.range} · Crit ${Math.round(w.crit*100)}%<br>Proficiency: ${(player.weaponProficiency || {})[player.weapon] || 0}<br><select onchange="equipWeapon(this.value)">${weaponOptions}</select>`;
+  }
+  const pointsEl = document.getElementById("attribute-allocation");
+  if (pointsEl) {
+    const labels = {str:"STR",dex:"DEX",con:"CON",int:"INT",wis:"WIS",cha:"CHA"};
+    pointsEl.innerHTML = `<strong>Spend Attribute Points (${player.attributePoints || 0})</strong><div class="attribute-grid">${Object.keys(labels).map(k => `<button onclick="allocateAttribute('${k}')" ${!(player.attributePoints > 0) ? "disabled" : ""}>+1 ${labels[k]}</button>`).join("")}</div>`;
+  }
   if (typeof updateNpcUI === 'function') updateNpcUI();
 }
 
@@ -345,6 +470,7 @@ function completeQuest(questId) {
     q.completed = true;
     player.gold += q.rewardGold;
     showAlert(`🏆 Quest Completed! Earned ${q.rewardGold} Gold!`, "success");
+    gainExp(40);
     updateUI();
   }
 }
@@ -366,7 +492,7 @@ function buyUpgrade(stat) {
 }
 
 function update() {
-  if (player.hp <= 0) return;
+  if (isPaused || player.hp <= 0) return;
   let moveX = joystickMoveX, moveY = joystickMoveY;
   if (moveX !== 0 || moveY !== 0) {
     player.x += moveX * getMoveSpeed();
@@ -399,7 +525,13 @@ function draw() {
 }
 
 function gameLoop() {
-  update(); draw(); requestAnimationFrame(gameLoop);
+  update(); draw();
+  autoSaveFrame++;
+  if (autoSaveFrame >= 1800) {
+    saveGame(false);
+    autoSaveFrame = 0;
+  }
+  requestAnimationFrame(gameLoop);
 }
 
 loadGame(); updateUI(); gameLoop();
